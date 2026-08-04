@@ -241,8 +241,8 @@ export const WindParticleLayer = L.Layer.extend({
       const lifeRatio = Math.max(0, p.life / p.maxLife);
       const headSpeed = p.speed || 10;
       // 明显加粗：头部最粗、尾部略细
-      const headWidth = Math.min(4.5, 1.8 + headSpeed / 14);
-      const tailWidth = 1.4;
+      const headWidth = Math.min(2.25, 0.9 + headSpeed / 28);
+      const tailWidth = 0.7;
 
       for (let i = 1; i < hist.length; i++) {
         const t = i / (hist.length - 1); // 0 tail -> 1 head
@@ -251,7 +251,7 @@ export const WindParticleLayer = L.Layer.extend({
         const x1 = hist[i].x;
         const y1 = hist[i].y;
 
-        // 黑色描线：尾巴更淡、头部更实，整体更显眼
+        // 海军蓝描线：尾巴更淡、头部更实，整体更显眼
         const alpha = (0.22 + 0.78 * t) * lifeRatio;
         const width = tailWidth + t * (headWidth - tailWidth);
 
@@ -266,7 +266,7 @@ export const WindParticleLayer = L.Layer.extend({
   },
 
   _colorAt(t, alphaBase) {
-    // 纯黑拖尾（头实尾淡），在浅色地图上清晰可见
-    return `rgba(0,0,0,${alphaBase.toFixed(3)})`;
+    // 海军蓝拖尾（头实尾淡），在浅色地图上清晰可见
+    return `rgba(29,52,97,${alphaBase.toFixed(3)})`;
   }
 });

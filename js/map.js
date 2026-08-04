@@ -17,7 +17,7 @@ export function initMap(center, zoom) {
   }).addTo(map);
   segmentLayer = L.layerGroup().addTo(map);
 
-  // 密集风场粒子层（默认显示，黑色加粗加长拖尾）
+  // 密集风场粒子层（默认显示，海军蓝加粗加长拖尾）
   windLayer = new WindParticleLayer({
     maxParticles: 600,
     trailLength: 22,

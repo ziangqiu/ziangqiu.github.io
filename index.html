@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vancouver KOM 助攻 · 温哥华骑行顺风助手</title>
+  <title>Vancouver KOM · 温哥华骑行顺风助手</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <link rel="stylesheet" href="css/styles.css" />
@@ -28,8 +28,7 @@
     <div class="brand">
       <span class="logo">🚴</span>
       <div>
-        <h1>Vancouver KOM 助攻</h1>
-        <p class="tagline">温哥华实时风向 · 挑顺风骑行</p>
+        <h1>Vancouver KOM</h1>
       </div>
     </div>
   </header>
@@ -40,7 +39,7 @@
     <section class="map-wrap">
       <div id="map"></div>
       <div class="legend">
-        <span><i class="arrow" style="background:#111"></i>风向流场（黑线越长越密＝风越大、越顺）</span>
+        <span><i class="arrow" style="background:#1d3461"></i>风向流场（海军蓝线越长越密＝风越大、越顺）</span>
       </div>
     </section>
 
@@ -69,7 +68,7 @@
     </div>
 
     <div id="detail-card" class="card" style="display:none"></div>
-    <p class="muted small">判定逻辑：仅当为顺风（方向吻合且风速为正）才对冲击 KOM 有积极影响；方向越吻合、风速越大，概率越高。风向数据来自 Open-Meteo，屏幕上的黑色流场实时反映风向风速。赛段为静态数据，你可在 <code>data/vancouver-segments.json</code> 中自行添加。</p>
+    <p class="muted small">判定逻辑：仅当为顺风（方向吻合且风速为正）才对冲击 KOM 有积极影响；方向越吻合、风速越大，概率越高。风向数据来自 Open-Meteo，屏幕上的海军蓝流场实时反映风向风速。赛段为静态数据，你可在 <code>data/vancouver-segments.json</code> 中自行添加。</p>
   </aside>
   </main>
 
