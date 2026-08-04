@@ -1,0 +1,45 @@
+/* 地图视觉增强：Apple 天气风格风向箭头 + 手绘涂鸦赛段描线 */
+
+/* ---------- 风向箭头 ---------- */
+.wind-arrow-wrap {
+  background: transparent !important;
+  border: none !important;
+}
+
+.wind-arrow {
+  transform-origin: 50% 50%;
+  transition: transform 0.6s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.wind-arrow-svg {
+  display: block;
+  overflow: visible;
+}
+
+@keyframes windPulse {
+  0%   { opacity: 0.55; transform: scale(0.92); }
+  50%  { opacity: 1;    transform: scale(1.08); }
+  100% { opacity: 0.55; transform: scale(0.92); }
+}
+
+.wind-arrow.pulse {
+  animation: windPulse 2.4s ease-in-out infinite;
+}
+
+/* ---------- 赛段手绘涂鸦描线 ---------- */
+.rough-seg {
+  filter: url(#rough);
+}
+
+.rough-seg-2 {
+  filter: url(#rough2);
+}
+
+/* Leaflet SVG 渲染时，滤镜需要足够大的滤镜区域以免被裁切 */
+.leaflet-overlay-pane svg {
+  overflow: visible;
+}

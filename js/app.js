@@ -49,9 +49,9 @@ function windPoints() {
 }
 
 // ---------- 地图 ----------
-function renderMap() {
+function renderMap({ loggedIn } = {}) {
   drawSegments(state.scored, onSelectSegment);
-  drawWindArrows(windPoints());
+  drawWindArrows(windPoints(), loggedIn);
 }
 
 function onSelectSegment(s) {
@@ -208,22 +208,27 @@ async function main() {
   state.cityWind = currentWind(cw);
 
   computeScores();
-  renderMap();
+  renderMap({ loggedIn: auth.isLoggedIn() });
   renderBrowser();
   updateAuthUI();
   setStatus('');
+
+  // 登录/登出时按新状态重绘地图（风向箭头样式切换）
+  auth.subscribeAuth(() => {
+    renderMap({ loggedIn: auth.isLoggedIn() });
+    updateAuthUI();
+  });
 }
 
 // 绑定 UI 事件
 window.addEventListener('DOMContentLoaded', () => {
   $('login-btn').addEventListener('click', () => {
-    if (auth.isLoggedIn()) { auth.logout(); updateAuthUI(); }
+    if (auth.isLoggedIn()) auth.logout();
     else openLoginModal();
   });
   $('login-submit').addEventListener('click', () => {
     auth.login($('login-name').value.trim());
     closeLoginModal();
-    updateAuthUI();
   });
   $('login-cancel').addEventListener('click', closeLoginModal);
 
