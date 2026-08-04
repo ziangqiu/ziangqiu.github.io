@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="css/map-style.css" />
 </head>
 <body>
-  <!-- 地图手绘涂鸦滤镜 + 风向箭头渐变/投影定义 -->
+  <!-- 地图手绘涂鸦滤镜定义（赛段为空时不参与渲染，保留以备后续添加赛段） -->
   <svg width="0" height="0" style="position:absolute; pointer-events:none;" aria-hidden="true">
     <defs>
       <filter id="rough">
@@ -29,11 +29,8 @@
       <span class="logo">🚴</span>
       <div>
         <h1>Vancouver KOM 助攻</h1>
-        <p class="tagline">温哥华实时风向 × Strava 赛段 · 挑顺风冲 KOM</p>
+        <p class="tagline">温哥华实时风向 · 挑顺风骑行</p>
       </div>
-    </div>
-    <div class="actions">
-      <button id="login-btn" class="btn btn-primary">登录</button>
     </div>
   </header>
 
@@ -43,16 +40,12 @@
     <section class="map-wrap">
       <div id="map"></div>
       <div class="legend">
-        <span><i style="background:#16a34a"></i>强顺风·极佳</span>
-        <span><i style="background:#65a30d"></i>顺风·良好</span>
-        <span><i style="background:#f59e0b"></i>侧风·一般</span>
-        <span><i style="background:#dc2626"></i>逆风·不宜</span>
-        <span><i class="arrow" style="background:#60a5fa"></i>风向流场</span>
+        <span><i class="arrow" style="background:#111"></i>风向流场（黑线越长越密＝风越大、越顺）</span>
       </div>
     </section>
 
   <aside class="sidebar">
-    <!-- 公开：赛段浏览 / 查询 -->
+    <!-- 赛段浏览 / 查询（添加赛段后生效） -->
     <div class="card" id="browser-card">
       <h3>赛段浏览 / 查询</h3>
       <input id="seg-search" type="text" placeholder="搜索赛段名称…" />
@@ -66,44 +59,23 @@
       <div id="seg-list" class="rec-list"></div>
     </div>
 
-    <!-- 未登录门槛（仅风速数值 + KOM 推荐） -->
-    <div id="sidebar-gate" class="gate">
-      <div class="lock">🔒</div>
-      <h3>登录后查看完整助攻</h3>
-      <p class="muted">登录即可看到基于天气预报的<b>实时风速</b>，以及未来几小时<b>最适合冲击 KOM 的推荐区域</b>。</p>
-      <button class="btn btn-primary" onclick="document.getElementById('login-btn').click()">立即登录</button>
-    </div>
+    <!-- 当前风向（始终展示，无需登录） -->
+    <div id="wind-card" class="card"></div>
 
-    <!-- 登录后内容 -->
-    <div id="sidebar-content" style="display:none">
-      <div id="wind-card" class="card"></div>
-      <div class="card">
-        <h3>未来几小时 KOM 推荐</h3>
-        <div id="rec-list" class="rec-list"></div>
-      </div>
+    <!-- 未来几小时 KOM 推荐（始终展示，无需登录；添加赛段后生效） -->
+    <div class="card">
+      <h3>未来几小时 KOM 推荐</h3>
+      <div id="rec-list" class="rec-list"></div>
     </div>
 
     <div id="detail-card" class="card" style="display:none"></div>
-    <p class="muted small">判定逻辑：仅当为顺风（方向吻合且风速为正）才对冲击 KOM 有积极影响；方向越吻合、风速越大，概率越高。赛段静态信息（距离/爬升/坡度/难度）已内置，无需联网。</p>
+    <p class="muted small">判定逻辑：仅当为顺风（方向吻合且风速为正）才对冲击 KOM 有积极影响；方向越吻合、风速越大，概率越高。风向数据来自 Open-Meteo，屏幕上的黑色流场实时反映风向风速。赛段为静态数据，你可在 <code>data/vancouver-segments.json</code> 中自行添加。</p>
   </aside>
   </main>
 
   <footer class="site-footer">
-    <p>风向数据：Open-Meteo（免费）· 地图：OpenStreetMap · 赛段：预置静态数据集</p>
+    <p>风向数据：Open-Meteo（免费）· 地图：OpenStreetMap · 赛段：可自行在本地数据文件中添加</p>
   </footer>
-
-  <!-- 登录弹窗 -->
-  <div id="login-modal" class="modal" style="display:none">
-    <div class="modal-box">
-      <h3>登录</h3>
-      <p class="muted small">演示用轻量登录（非真实账号系统），仅用于内容门槛。</p>
-      <input id="login-name" type="text" placeholder="昵称（可留空）" />
-      <div class="modal-actions">
-        <button id="login-cancel" class="btn">取消</button>
-        <button id="login-submit" class="btn btn-primary">登录</button>
-      </div>
-    </div>
-  </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>

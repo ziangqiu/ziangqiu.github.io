@@ -17,12 +17,12 @@ export function initMap(center, zoom) {
   }).addTo(map);
   segmentLayer = L.layerGroup().addTo(map);
 
-  // Apple Weather 风格的密集风场粒子层（默认显示）
+  // 密集风场粒子层（默认显示，黑色加粗加长拖尾）
   windLayer = new WindParticleLayer({
-    maxParticles: 420,
-    trailLength: 10,
-    baseSpeed: 0.075,
-    spawnRate: 4,
+    maxParticles: 600,
+    trailLength: 22,
+    baseSpeed: 0.085,
+    spawnRate: 6,
     sampleInterval: 3
   }).addTo(map);
 

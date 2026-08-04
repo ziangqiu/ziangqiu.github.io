@@ -29,10 +29,10 @@ function windVector(dirFrom, speed) {
 
 export const WindParticleLayer = L.Layer.extend({
   options: {
-    maxParticles: 420,    // total particles on screen
-    trailLength: 10,      // base history length
-    baseSpeed: 0.075,     // px per frame per km/h
-    spawnRate: 4,         // particles spawned per frame (modulated by avg wind)
+    maxParticles: 600,    // total particles on screen (denser)
+    trailLength: 22,      // base history length (much longer)
+    baseSpeed: 0.085,     // px per frame per km/h
+    spawnRate: 6,         // particles spawned per frame (modulated by avg wind)
     sampleInterval: 3,    // resample wind every N frames for performance
     lineCap: 'round',
     lineJoin: 'round'
@@ -210,8 +210,8 @@ export const WindParticleLayer = L.Layer.extend({
       p.life--;
 
       p.history.push({ x: p.x, y: p.y });
-      // Longer trails for stronger wind
-      const dynamicLen = Math.min(trailBase + Math.floor((p.speed || 10) / 5), 18);
+      // 风越大拖尾越长（明显加长）
+      const dynamicLen = Math.min(trailBase + Math.floor((p.speed || 10) / 3), 40);
       if (p.history.length > dynamicLen) p.history.shift();
 
       const out = p.x < -margin || p.x > this._width + margin ||
@@ -240,8 +240,9 @@ export const WindParticleLayer = L.Layer.extend({
 
       const lifeRatio = Math.max(0, p.life / p.maxLife);
       const headSpeed = p.speed || 10;
-      const headWidth = Math.min(2.4, 0.9 + headSpeed / 30);
-      const tailWidth = 0.35;
+      // 明显加粗：头部最粗、尾部略细
+      const headWidth = Math.min(4.5, 1.8 + headSpeed / 14);
+      const tailWidth = 1.4;
 
       for (let i = 1; i < hist.length; i++) {
         const t = i / (hist.length - 1); // 0 tail -> 1 head
@@ -250,7 +251,8 @@ export const WindParticleLayer = L.Layer.extend({
         const x1 = hist[i].x;
         const y1 = hist[i].y;
 
-        const alpha = (0.08 + 0.92 * t) * lifeRatio;
+        // 黑色描线：尾巴更淡、头部更实，整体更显眼
+        const alpha = (0.22 + 0.78 * t) * lifeRatio;
         const width = tailWidth + t * (headWidth - tailWidth);
 
         ctx.beginPath();
@@ -264,11 +266,7 @@ export const WindParticleLayer = L.Layer.extend({
   },
 
   _colorAt(t, alphaBase) {
-    // Tail: deep blue; Head: bright cyan/white (Apple Weather wind look)
-    const r = Math.round(30 + 205 * t);
-    const g = Math.round(100 + 145 * t);
-    const b = Math.round(230 + 25 * t);
-    const a = alphaBase * (0.15 + 0.85 * t);
-    return `rgba(${r},${g},${b},${a.toFixed(3)})`;
+    // 纯黑拖尾（头实尾淡），在浅色地图上清晰可见
+    return `rgba(0,0,0,${alphaBase.toFixed(3)})`;
   }
 });

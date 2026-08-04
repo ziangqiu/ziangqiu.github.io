@@ -1,155 +1,49 @@
+// 主逻辑：全城风向网格采样 + 地图风场渲染 + 始终可见的风速/推荐面板
+// 说明：登录门槛已移除，所有内容无需登录即可访问。预设赛段已清空，
+// 由用户自行在 data/vancouver-segments.json 中添加赛段。
 import { CONFIG } from './config.js';
-import { bearing, midpoint } from './geo.js';
 import { fetchWind, currentWind } from './wind.js';
-import { scoreSegment, rank, labelFor, colorFor, windTo } from './score.js';
-import { initMap, drawSegments, drawWindFlow, highlightSegment } from './map.js';
-import * as auth from './auth.js';
+import { initMap, drawSegments, drawWindFlow } from './map.js';
 
 const state = {
-  segments: [],
-  windPairs: [],   // { seg, mid, wind }
-  scored: [],
-  cityWind: null,
-  selectedId: null,
-  diffFilter: 'all'
+  windPoints: [],   // 全城网格风场采样点 {lat, lng, speed, dirFrom}
+  cityWind: null
 };
 
 const $ = id => document.getElementById(id);
 
-const DIFF_LABEL = { easy: '轻松', moderate: '中等', hard: '困难', expert: '专家' };
-const diffLabel = d => DIFF_LABEL[d] || d;
+const windTo = deg => (deg + 180) % 360;
 
-async function loadSegments() {
-  const res = await fetch('data/vancouver-segments.json');
-  const data = await res.json();
-  return data.segments.map(s => ({ ...s, bearing: bearing(s.start, s.end) }));
-}
-
-async function buildWind(segments) {
-  const pairs = [];
-  for (const s of segments) {
-    const mid = midpoint(s.start, s.end);
-    const wind = await fetchWind(mid[0], mid[1]);
-    pairs.push({ seg: s, mid, wind });
+// 在温哥华都会区范围内生成覆盖全城的采样网格（不再依赖赛段）
+function buildWindGrid() {
+  const c = CONFIG.city;
+  const span = 0.18;          // 约 ±20km，覆盖大温
+  const cols = 4, rows = 4;   // 4×4 = 16 个采样点
+  const pts = [];
+  for (let i = 0; i < cols; i++) {
+    for (let j = 0; j < rows; j++) {
+      const lat = c.lat - span + (2 * span) * i / (cols - 1);
+      const lng = c.lng - span + (2 * span) * j / (rows - 1);
+      pts.push([lat, lng]);
+    }
   }
-  return pairs;
-}
-
-function computeScores() {
-  state.scored = state.windPairs.map(({ seg, wind }) =>
-    scoreSegment(seg, wind, CONFIG.model, CONFIG.forecastHours)
-  );
+  return pts;
 }
 
 function windPoints() {
-  return state.windPairs.map(p => {
-    const c = currentWind(p.wind);
-    return { lat: p.mid[0], lng: p.mid[1], speed: c.speed, dirFrom: c.dirFrom };
-  });
-}
-
-// ---------- 地图 ----------
-function renderMap() {
-  drawSegments(state.scored, onSelectSegment);
-  drawWindFlow(windPoints()); // 风场粒子流默认铺满地图（Apple Weather 风格）
-}
-
-function onSelectSegment(s) {
-  state.selectedId = s.seg.id;
-  highlightSegment(state.scored, s.seg.id);
-  const card = $('detail-card');
-  card.style.display = '';
-  card.innerHTML = detailHtml(s);
+  return state.windPoints;
 }
 
 function fmtTime(d) {
   return d.toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit', weekday: 'short' });
 }
 
-// 详情卡：静态信息始终展示；风速/概率分析登录后展示
-function detailHtml(s) {
-  const d = s.seg;
-  let html = `
-    <h3>${d.name}</h3>
-    <span class="diff-tag diff-${d.difficulty}">${diffLabel(d.difficulty)}</span>
-    <div class="kv"><span>距离</span><b>${d.distance} km</b></div>
-    <div class="kv"><span>累计爬升</span><b>${d.elevationGain} m</b></div>
-    <div class="kv"><span>平均坡度</span><b>${d.avgGrade}%</b></div>
-    <div class="kv"><span>骑行方向</span><b>${Math.round(s.segBearing)}°</b></div>
-    <p class="muted small">${d.description || ''}</p>`;
-
-  if (auth.isLoggedIn() && s.best) {
-    const b = s.best;
-    html += `
-    <hr class="sep">
-    <div class="kv"><span>当前 KOM 概率</span><b style="color:${colorFor(s.probability)}">${Math.round(s.probability * 100)}% · ${labelFor(s.probability)}</b></div>
-    <div class="kv"><span>最佳窗口</span><b>${fmtTime(b.time)}</b></div>
-    <div class="kv"><span>该窗口风速</span><b>${Math.round(b.speed)} km/h</b></div>
-    <div class="kv"><span>风向吻合度</span><b>${Math.round(b.align * 100)}%</b></div>
-    <div class="kv"><span>顺风分量</span><b>${b.comp.toFixed(1)} km/h</b></div>`;
-  } else {
-    html += `<hr class="sep"><p class="muted small">登录后可查看该赛段的实时风速分析与最佳冲刺窗口。</p>`;
-  }
-  return html;
-}
-
-// ---------- 赛段浏览 / 查询（公开） ----------
-function renderBrowser() {
-  const q = ($('seg-search').value || '').trim().toLowerCase();
-  const diff = state.diffFilter;
-  const list = state.scored.filter(s => {
-    const okQ = !q || s.seg.name.toLowerCase().includes(q);
-    const okD = diff === 'all' || s.seg.difficulty === diff;
-    return okQ && okD;
-  });
-  const box = $('seg-list');
-  if (!list.length) {
-    box.innerHTML = '<p class="muted small">没有匹配的赛段。</p>';
-    return;
-  }
-  box.innerHTML = list.map(s => `
-    <div class="rec-item" data-id="${s.seg.id}">
-      <span class="rec-dot" style="background:${colorFor(s.probability)}"></span>
-      <div class="rec-main">
-        <div class="rec-name">${s.seg.name} <span class="diff-tag diff-${s.seg.difficulty}">${diffLabel(s.seg.difficulty)}</span></div>
-        <div class="rec-sub">${s.seg.distance} km · 爬升 ${s.seg.elevationGain} m · ${s.seg.avgGrade}%</div>
-      </div>
-    </div>`).join('');
-  box.querySelectorAll('.rec-item').forEach(el => {
-    el.addEventListener('click', () => {
-      const id = el.getAttribute('data-id');
-      const s = state.scored.find(x => x.seg.id === id);
-      if (s) onSelectSegment(s);
-    });
-  });
-}
-
-// ---------- 登录门槛（仅风速数值 + KOM 推荐） ----------
-function updateAuthUI() {
-  const gate = $('sidebar-gate');
-  const content = $('sidebar-content');
-  const btn = $('login-btn');
-  if (auth.isLoggedIn()) {
-    gate.style.display = 'none';
-    content.style.display = '';
-    renderWindCard();
-    renderRecommendations();
-    btn.textContent = auth.userName() ? '退出 (' + auth.userName() + ')' : '退出';
-  } else {
-    gate.style.display = '';
-    content.style.display = 'none';
-    btn.textContent = '登录';
-  }
-  // 登录状态变化后，若已选中赛段，刷新详情卡（风速分析显隐）
-  if (state.selectedId) {
-    const s = state.scored.find(x => x.seg.id === state.selectedId);
-    if (s) { const c = $('detail-card'); c.innerHTML = detailHtml(s); }
-  }
-}
-
 function renderWindCard() {
   const c = state.cityWind;
-  if (!c) return;
+  if (!c) {
+    $('wind-card').innerHTML = '<h3>当前温哥华风向</h3><p class="muted small">正在获取实时风向…</p>';
+    return;
+  }
   $('wind-card').innerHTML = `
     <h3>当前温哥华风向</h3>
     <div class="big-wind">
@@ -161,35 +55,14 @@ function renderWindCard() {
 }
 
 function renderRecommendations() {
-  const ranked = rank(state.scored).filter(s => s.recommended).slice(0, 8);
   const box = $('rec-list');
-  if (!ranked.length) {
-    box.innerHTML = '<p class="muted small">未来数小时暂无明显顺风赛段，建议等风向转好再冲 KOM。</p>';
-    return;
-  }
-  box.innerHTML = ranked.map(s => {
-    const b = s.best;
-    return `
-      <div class="rec-item" data-id="${s.seg.id}">
-        <span class="rec-dot" style="background:${colorFor(s.probability)}"></span>
-        <div class="rec-main">
-          <div class="rec-name">${s.seg.name}</div>
-          <div class="rec-sub">最佳 ${b ? fmtTime(b.time) : '-'} · ${b ? Math.round(b.speed) : 0} km/h · 吻合 ${b ? Math.round(b.align * 100) : 0}%</div>
-        </div>
-        <div class="rec-prob" style="color:${colorFor(s.probability)}">${Math.round(s.probability * 100)}%<br><span>${labelFor(s.probability)}</span></div>
-      </div>`;
-  }).join('');
-  box.querySelectorAll('.rec-item').forEach(el => {
-    el.addEventListener('click', () => {
-      const id = el.getAttribute('data-id');
-      const s = state.scored.find(x => x.seg.id === id);
-      if (s) onSelectSegment(s);
-    });
-  });
+  box.innerHTML = '<p class="muted small">地图上还没有赛段。在 <code>data/vancouver-segments.json</code> 中添加赛段后，这里会显示未来几小时最适合冲击 KOM 的推荐区域。</p>';
 }
 
-function openLoginModal() { $('login-modal').style.display = 'flex'; $('login-name').focus(); }
-function closeLoginModal() { $('login-modal').style.display = 'none'; }
+function renderBrowser() {
+  const box = $('seg-list');
+  box.innerHTML = '<p class="muted small">暂无赛段。你可在 <code>data/vancouver-segments.json</code> 中添加赛段（名称、起终点经纬度、距离、爬升、坡度、难度），刷新页面即可在地图上显示并在此处检索。</p>';
+}
 
 function setStatus(msg) {
   const el = $('status');
@@ -199,48 +72,32 @@ function setStatus(msg) {
 
 async function main() {
   initMap(CONFIG.city, CONFIG.city.zoom);
-  setStatus('正在加载温哥华赛段…');
-  state.segments = await loadSegments();
+  setStatus('正在获取温哥华实时风向（覆盖全城）…');
 
-  setStatus('正在获取温哥华实时风向（未来 ' + CONFIG.forecastHours + ' 小时）…');
-  state.windPairs = await buildWind(state.segments);
+  // 全城网格采样风向（独立于点，赛段为空也能显示风场）
+  const grid = buildWindGrid();
+  const results = await Promise.all(
+    grid.map(([lat, lng]) =>
+      fetchWind(lat, lng).then(currentWind).catch(() => null)
+    )
+  );
+  state.windPoints = grid
+    .map(([lat, lng], i) => results[i]
+      ? { lat, lng, speed: results[i].speed, dirFrom: results[i].dirFrom }
+      : null)
+    .filter(Boolean);
+
   const cw = await fetchWind(CONFIG.city.lat, CONFIG.city.lng);
   state.cityWind = currentWind(cw);
 
-  computeScores();
-  renderMap();
+  drawSegments([], null);
+  drawWindFlow(state.windPoints);
+  renderWindCard();
+  renderRecommendations();
   renderBrowser();
-  updateAuthUI();
   setStatus('');
-
-  // 登录/登出时重绘赛段与侧边栏（风场粒子流保持默认显示）
-  auth.subscribeAuth(() => {
-    renderMap();
-    updateAuthUI();
-  });
 }
 
-// 绑定 UI 事件
 window.addEventListener('DOMContentLoaded', () => {
-  $('login-btn').addEventListener('click', () => {
-    if (auth.isLoggedIn()) auth.logout();
-    else openLoginModal();
-  });
-  $('login-submit').addEventListener('click', () => {
-    auth.login($('login-name').value.trim());
-    closeLoginModal();
-  });
-  $('login-cancel').addEventListener('click', closeLoginModal);
-
-  $('seg-search').addEventListener('input', renderBrowser);
-  document.querySelectorAll('#seg-filters button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('#seg-filters button').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      state.diffFilter = btn.getAttribute('data-diff');
-      renderBrowser();
-    });
-  });
-
   main().catch(e => setStatus('出错了：' + e.message));
 });
