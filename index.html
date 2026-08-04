@@ -18,7 +18,6 @@
       </div>
     </div>
     <div class="actions">
-      <button id="strava-btn" class="btn btn-strava">连接 Strava</button>
       <button id="login-btn" class="btn btn-primary">登录</button>
     </div>
   </header>
@@ -37,30 +36,45 @@
       </div>
     </section>
 
-    <aside class="sidebar">
-      <!-- 未登录门槛 -->
-      <div id="sidebar-gate" class="gate">
-        <div class="lock">🔒</div>
-        <h3>登录后查看完整助攻</h3>
-        <p class="muted">登录即可看到基于天气预报的<b>实时风速</b>，以及未来几小时<b>最适合冲击 KOM 的推荐区域</b>。</p>
-        <button class="btn btn-primary" onclick="document.getElementById('login-btn').click()">立即登录</button>
+  <aside class="sidebar">
+    <!-- 公开：赛段浏览 / 查询 -->
+    <div class="card" id="browser-card">
+      <h3>赛段浏览 / 查询</h3>
+      <input id="seg-search" type="text" placeholder="搜索赛段名称…" />
+      <div class="seg-filters" id="seg-filters">
+        <button data-diff="all" class="active">全部</button>
+        <button data-diff="easy">轻松</button>
+        <button data-diff="moderate">中等</button>
+        <button data-diff="hard">困难</button>
+        <button data-diff="expert">专家</button>
       </div>
+      <div id="seg-list" class="rec-list"></div>
+    </div>
 
-      <!-- 登录后内容 -->
-      <div id="sidebar-content" style="display:none">
-        <div id="wind-card" class="card"></div>
-        <div class="card">
-          <h3>未来几小时 KOM 推荐</h3>
-          <div id="rec-list" class="rec-list"></div>
-        </div>
-        <div id="detail-card" class="card" style="display:none"></div>
-        <p class="muted small">判定逻辑：仅当为顺风（方向吻合且风速为正）才对冲击 KOM 有积极影响；方向越吻合、风速越大，概率越高。</p>
+    <!-- 未登录门槛（仅风速数值 + KOM 推荐） -->
+    <div id="sidebar-gate" class="gate">
+      <div class="lock">🔒</div>
+      <h3>登录后查看完整助攻</h3>
+      <p class="muted">登录即可看到基于天气预报的<b>实时风速</b>，以及未来几小时<b>最适合冲击 KOM 的推荐区域</b>。</p>
+      <button class="btn btn-primary" onclick="document.getElementById('login-btn').click()">立即登录</button>
+    </div>
+
+    <!-- 登录后内容 -->
+    <div id="sidebar-content" style="display:none">
+      <div id="wind-card" class="card"></div>
+      <div class="card">
+        <h3>未来几小时 KOM 推荐</h3>
+        <div id="rec-list" class="rec-list"></div>
       </div>
-    </aside>
+    </div>
+
+    <div id="detail-card" class="card" style="display:none"></div>
+    <p class="muted small">判定逻辑：仅当为顺风（方向吻合且风速为正）才对冲击 KOM 有积极影响；方向越吻合、风速越大，概率越高。赛段静态信息（距离/爬升/坡度/难度）已内置，无需联网。</p>
+  </aside>
   </main>
 
   <footer class="site-footer">
-    <p>风向数据：Open-Meteo（免费）· 地图：OpenStreetMap · 赛段：本地数据集 / Strava API</p>
+    <p>风向数据：Open-Meteo（免费）· 地图：OpenStreetMap · 赛段：预置静态数据集</p>
   </footer>
 
   <!-- 登录弹窗 -->

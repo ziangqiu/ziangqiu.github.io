@@ -1,113 +1,149 @@
 {
-  "_note": "温哥华热门骑行赛段起始数据集。bearing 由起终点在 JS 中实时计算。stravaId 留空时直接使用本地坐标；填入真实 Strava 赛段 ID 后，点击「连接 Strava」即可拉取官方几何/名称。坐标与名称为示意，请按需替换为你的常用 KOM 赛段。",
+  "_note": "温哥华热门骑行赛段静态数据集（非实时，直接内置）。distance=公里, elevationGain=累计爬升(米), avgGrade=平均坡度(%), difficulty=easy/moderate/hard/expert。bearing 仍由起终点在 JS 中实时计算。坐标与名称为示意，请按需替换为你的常用 KOM 赛段。",
   "segments": [
     {
       "id": "stanley-seawall-n",
       "name": "Stanley Park Seawall (北段)",
       "category": "flat",
+      "difficulty": "easy",
+      "distance": 3.0,
+      "elevationGain": 10,
+      "avgGrade": 0.3,
       "start": [49.2950, -123.1350],
       "end": [49.3055, -123.1305],
-      "stravaId": null,
-      "note": "海堤北段，沿海平路，顺风收益明显"
+      "description": "海堤北段沿 Burrard Inlet，平路顺风收益明显，适合计时冲刺。"
     },
     {
       "id": "lions-gate-n",
       "name": "Lions Gate Bridge (北行爬坡)",
       "category": "climb",
+      "difficulty": "hard",
+      "distance": 2.4,
+      "elevationGain": 95,
+      "avgGrade": 4.0,
       "start": [49.3030, -123.1350],
       "end": [49.3255, -123.1400],
-      "stravaId": null,
-      "note": "狮门大桥北向爬坡，长桥侧风影响大"
+      "description": "狮门大桥北向爬坡，长桥横风影响大，顺风时大幅省力。"
     },
     {
       "id": "cypress-bowl",
       "name": "Cypress Bowl Road",
       "category": "climb",
+      "difficulty": "expert",
+      "distance": 7.5,
+      "elevationGain": 520,
+      "avgGrade": 6.9,
       "start": [49.3400, -123.2000],
       "end": [49.3705, -123.2050],
-      "stravaId": null,
-      "note": "西温经典长爬坡，著名 KOM 路段"
+      "description": "西温经典长爬坡，著名 KOM，逆风时极难。"
     },
     {
       "id": "burnaby-mtn",
       "name": "Burnaby Mountain (SFU)",
       "category": "climb",
+      "difficulty": "hard",
+      "distance": 4.2,
+      "elevationGain": 240,
+      "avgGrade": 5.7,
       "start": [49.2500, -122.9500],
       "end": [49.2780, -122.9200],
-      "stravaId": null,
-      "note": "通往 SFU 的山顶爬坡"
+      "description": "通往 SFU 山顶的连续爬坡。"
     },
     {
       "id": "iona-beach",
       "name": "Iona Beach (机场防风堤)",
       "category": "flat",
+      "difficulty": "easy",
+      "distance": 5.0,
+      "elevationGain": 5,
+      "avgGrade": 0.1,
       "start": [49.2100, -123.1900],
       "end": [49.2205, -123.2000],
-      "stravaId": null,
-      "note": "机场旁极开阔平路，常年大风"
+      "description": "机场旁极开阔平路，常年大风，典型顺风冲刺段。"
     },
     {
       "id": "richmond-dyke",
       "name": "Richmond Dyke (东西防风堤)",
       "category": "flat",
+      "difficulty": "easy",
+      "distance": 8.0,
+      "elevationGain": 3,
+      "avgGrade": 0.05,
       "start": [49.1700, -123.1800],
       "end": [49.1700, -123.1000],
-      "stravaId": null,
-      "note": "列治文河堤，东西向平路，典型顺风冲刺段"
+      "description": "列治文河堤东西向平路，最适合顺风刷 KOM。"
     },
     {
       "id": "ubc-pgr",
       "name": "UBC Point Grey Road",
       "category": "rolling",
+      "difficulty": "moderate",
+      "distance": 3.5,
+      "elevationGain": 40,
+      "avgGrade": 1.1,
       "start": [49.2700, -123.1900],
       "end": [49.2600, -123.1500],
-      "stravaId": null,
-      "note": "UBC 一带起伏路"
+      "description": "UBC 一带起伏路。"
     },
     {
       "id": "spanish-banks",
       "name": "Spanish Banks",
       "category": "flat",
+      "difficulty": "easy",
+      "distance": 3.0,
+      "elevationGain": 5,
+      "avgGrade": 0.2,
       "start": [49.2750, -123.2000],
       "end": [49.2700, -123.1700],
-      "stravaId": null,
-      "note": "西班牙堤岸平路"
+      "description": "西班牙堤岸平路。"
     },
     {
       "id": "taylor-way",
       "name": "Taylor Way (British Properties)",
       "category": "climb",
+      "difficulty": "hard",
+      "distance": 2.0,
+      "elevationGain": 150,
+      "avgGrade": 7.5,
       "start": [49.3300, -123.1400],
       "end": [49.3500, -123.1450],
-      "stravaId": null,
-      "note": "西温 British Properties 爬坡"
+      "description": "西温 British Properties 陡爬坡。"
     },
     {
       "id": "kits-seawall",
       "name": "Kitsilano False Creek Seawall",
       "category": "flat",
+      "difficulty": "easy",
+      "distance": 4.5,
+      "elevationGain": 8,
+      "avgGrade": 0.2,
       "start": [49.2720, -123.1400],
       "end": [49.2700, -123.1100],
-      "stravaId": null,
-      "note": "False Creek 海堤东向平路"
+      "description": "False Creek 海堤东向平路。"
     },
     {
       "id": "grandview-hwy",
       "name": "Grandview Highway",
       "category": "rolling",
+      "difficulty": "moderate",
+      "distance": 4.0,
+      "elevationGain": 120,
+      "avgGrade": 3.0,
       "start": [49.2500, -123.0500],
       "end": [49.2700, -123.0200],
-      "stravaId": null,
-      "note": "本拿比东向起伏路"
+      "description": "本拿比东向起伏路。"
     },
     {
       "id": "cambie-south",
       "name": "Cambie St (南向)",
       "category": "flat",
+      "difficulty": "easy",
+      "distance": 4.0,
+      "elevationGain": 10,
+      "avgGrade": 0.3,
       "start": [49.2600, -123.1200],
       "end": [49.2300, -123.1150],
-      "stravaId": null,
-      "note": "温哥华市区南北向平路"
+      "description": "温哥华市区南北向平路。"
     }
   ]
 }

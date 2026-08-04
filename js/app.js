@@ -4,16 +4,20 @@ import { fetchWind, currentWind } from './wind.js';
 import { scoreSegment, rank, labelFor, colorFor, windTo } from './score.js';
 import { initMap, drawSegments, drawWindArrows, highlightSegment } from './map.js';
 import * as auth from './auth.js';
-import * as strava from './strava.js';
 
 const state = {
   segments: [],
   windPairs: [],   // { seg, mid, wind }
   scored: [],
-  cityWind: null
+  cityWind: null,
+  selectedId: null,
+  diffFilter: 'all'
 };
 
 const $ = id => document.getElementById(id);
+
+const DIFF_LABEL = { easy: '轻松', moderate: '中等', hard: '困难', expert: '专家' };
+const diffLabel = d => DIFF_LABEL[d] || d;
 
 async function loadSegments() {
   const res = await fetch('data/vancouver-segments.json');
@@ -44,13 +48,14 @@ function windPoints() {
   });
 }
 
-// ---------- 渲染 ----------
+// ---------- 地图 ----------
 function renderMap() {
   drawSegments(state.scored, onSelectSegment);
   drawWindArrows(windPoints());
 }
 
 function onSelectSegment(s) {
+  state.selectedId = s.seg.id;
   highlightSegment(state.scored, s.seg.id);
   const card = $('detail-card');
   card.style.display = '';
@@ -61,18 +66,85 @@ function fmtTime(d) {
   return d.toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit', weekday: 'short' });
 }
 
+// 详情卡：静态信息始终展示；风速/概率分析登录后展示
 function detailHtml(s) {
-  const b = s.best;
-  return `
-    <h3>${s.seg.name}</h3>
-    <p class="muted">${s.seg.category} · 骑行方向 ${Math.round(s.segBearing)}°</p>
-    <div class="kv"><span>当前 KOM 概率</span><b style="color:${colorFor(s.probability)}">${Math.round(s.probability*100)}% · ${labelFor(s.probability)}</b></div>
-    ${b ? `
+  const d = s.seg;
+  let html = `
+    <h3>${d.name}</h3>
+    <span class="diff-tag diff-${d.difficulty}">${diffLabel(d.difficulty)}</span>
+    <div class="kv"><span>距离</span><b>${d.distance} km</b></div>
+    <div class="kv"><span>累计爬升</span><b>${d.elevationGain} m</b></div>
+    <div class="kv"><span>平均坡度</span><b>${d.avgGrade}%</b></div>
+    <div class="kv"><span>骑行方向</span><b>${Math.round(s.segBearing)}°</b></div>
+    <p class="muted small">${d.description || ''}</p>`;
+
+  if (auth.isLoggedIn() && s.best) {
+    const b = s.best;
+    html += `
+    <hr class="sep">
+    <div class="kv"><span>当前 KOM 概率</span><b style="color:${colorFor(s.probability)}">${Math.round(s.probability * 100)}% · ${labelFor(s.probability)}</b></div>
     <div class="kv"><span>最佳窗口</span><b>${fmtTime(b.time)}</b></div>
     <div class="kv"><span>该窗口风速</span><b>${Math.round(b.speed)} km/h</b></div>
-    <div class="kv"><span>风向吻合度</span><b>${Math.round(b.align*100)}%</b></div>
-    <div class="kv"><span>顺风分量</span><b>${b.comp.toFixed(1)} km/h</b></div>` : ''}
-    <p class="muted small">${s.seg.note || ''}</p>`;
+    <div class="kv"><span>风向吻合度</span><b>${Math.round(b.align * 100)}%</b></div>
+    <div class="kv"><span>顺风分量</span><b>${b.comp.toFixed(1)} km/h</b></div>`;
+  } else {
+    html += `<hr class="sep"><p class="muted small">登录后可查看该赛段的实时风速分析与最佳冲刺窗口。</p>`;
+  }
+  return html;
+}
+
+// ---------- 赛段浏览 / 查询（公开） ----------
+function renderBrowser() {
+  const q = ($('seg-search').value || '').trim().toLowerCase();
+  const diff = state.diffFilter;
+  const list = state.scored.filter(s => {
+    const okQ = !q || s.seg.name.toLowerCase().includes(q);
+    const okD = diff === 'all' || s.seg.difficulty === diff;
+    return okQ && okD;
+  });
+  const box = $('seg-list');
+  if (!list.length) {
+    box.innerHTML = '<p class="muted small">没有匹配的赛段。</p>';
+    return;
+  }
+  box.innerHTML = list.map(s => `
+    <div class="rec-item" data-id="${s.seg.id}">
+      <span class="rec-dot" style="background:${colorFor(s.probability)}"></span>
+      <div class="rec-main">
+        <div class="rec-name">${s.seg.name} <span class="diff-tag diff-${s.seg.difficulty}">${diffLabel(s.seg.difficulty)}</span></div>
+        <div class="rec-sub">${s.seg.distance} km · 爬升 ${s.seg.elevationGain} m · ${s.seg.avgGrade}%</div>
+      </div>
+    </div>`).join('');
+  box.querySelectorAll('.rec-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.getAttribute('data-id');
+      const s = state.scored.find(x => x.seg.id === id);
+      if (s) onSelectSegment(s);
+    });
+  });
+}
+
+// ---------- 登录门槛（仅风速数值 + KOM 推荐） ----------
+function updateAuthUI() {
+  const gate = $('sidebar-gate');
+  const content = $('sidebar-content');
+  const btn = $('login-btn');
+  if (auth.isLoggedIn()) {
+    gate.style.display = 'none';
+    content.style.display = '';
+    renderWindCard();
+    renderRecommendations();
+    btn.textContent = auth.userName() ? '退出 (' + auth.userName() + ')' : '退出';
+  } else {
+    gate.style.display = '';
+    content.style.display = 'none';
+    btn.textContent = '登录';
+  }
+  // 登录状态变化后，若已选中赛段，刷新详情卡（风速分析显隐）
+  if (state.selectedId) {
+    const s = state.scored.find(x => x.seg.id === state.selectedId);
+    if (s) { const c = $('detail-card'); c.innerHTML = detailHtml(s); }
+  }
 }
 
 function renderWindCard() {
@@ -92,7 +164,7 @@ function renderRecommendations() {
   const ranked = rank(state.scored).filter(s => s.recommended).slice(0, 8);
   const box = $('rec-list');
   if (!ranked.length) {
-    box.innerHTML = '<p class="muted">未来数小时暂无明显顺风赛段，建议等风向转好再冲 KOM。</p>';
+    box.innerHTML = '<p class="muted small">未来数小时暂无明显顺风赛段，建议等风向转好再冲 KOM。</p>';
     return;
   }
   box.innerHTML = ranked.map(s => {
@@ -102,9 +174,9 @@ function renderRecommendations() {
         <span class="rec-dot" style="background:${colorFor(s.probability)}"></span>
         <div class="rec-main">
           <div class="rec-name">${s.seg.name}</div>
-          <div class="rec-sub">最佳 ${b ? fmtTime(b.time) : '-'} · ${b ? Math.round(b.speed) : 0} km/h · 吻合 ${b ? Math.round(b.align*100) : 0}%</div>
+          <div class="rec-sub">最佳 ${b ? fmtTime(b.time) : '-'} · ${b ? Math.round(b.speed) : 0} km/h · 吻合 ${b ? Math.round(b.align * 100) : 0}%</div>
         </div>
-        <div class="rec-prob" style="color:${colorFor(s.probability)}">${Math.round(s.probability*100)}%<br><span>${labelFor(s.probability)}</span></div>
+        <div class="rec-prob" style="color:${colorFor(s.probability)}">${Math.round(s.probability * 100)}%<br><span>${labelFor(s.probability)}</span></div>
       </div>`;
   }).join('');
   box.querySelectorAll('.rec-item').forEach(el => {
@@ -116,66 +188,9 @@ function renderRecommendations() {
   });
 }
 
-// ---------- 登录门槛 ----------
-function updateAuthUI() {
-  const gate = $('sidebar-gate');
-  const content = $('sidebar-content');
-  const btn = $('login-btn');
-  if (auth.isLoggedIn()) {
-    gate.style.display = 'none';
-    content.style.display = '';
-    renderWindCard();
-    renderRecommendations();
-    const name = auth.userName();
-    btn.textContent = name ? '退出 (' + name + ')' : '退出';
-  } else {
-    gate.style.display = '';
-    content.style.display = 'none';
-    btn.textContent = '登录';
-  }
-}
+function openLoginModal() { $('login-modal').style.display = 'flex'; $('login-name').focus(); }
+function closeLoginModal() { $('login-modal').style.display = 'none'; }
 
-function openLoginModal() {
-  $('login-modal').style.display = 'flex';
-  $('login-name').focus();
-}
-
-function closeLoginModal() {
-  $('login-modal').style.display = 'none';
-}
-
-// ---------- Strava ----------
-function setupStrava() {
-  const btn = $('strava-btn');
-  if (!CONFIG.strava.clientId) {
-    btn.title = '需在 js/config.js 填入 Strava Client ID 后方可连接';
-    btn.classList.add('disabled');
-    return;
-  }
-  btn.addEventListener('click', () => {
-    window.location.href = strava.stravaAuthUrl();
-  });
-}
-
-async function handleStravaCallback() {
-  const token = strava.getStravaTokenFromHash();
-  if (!token) return;
-  // 清掉 hash，避免刷新重复触发
-  history.replaceState(null, '', window.location.pathname + window.location.search);
-  setStatus('已连接 Strava，正在拉取真实赛段几何…');
-  try {
-    state.segments = await strava.refreshFromStrava(state.segments, token);
-    state.segments.forEach(s => { s.bearing = bearing(s.start, s.end); });
-    computeScores();
-    renderMap();
-    updateAuthUI();
-    setStatus('');
-  } catch (e) {
-    setStatus('Strava 数据拉取失败：' + e.message);
-  }
-}
-
-// ---------- 通用 ----------
 function setStatus(msg) {
   const el = $('status');
   el.textContent = msg;
@@ -184,9 +199,6 @@ function setStatus(msg) {
 
 async function main() {
   initMap(CONFIG.city, CONFIG.city.zoom);
-  setupStrava();
-  await handleStravaCallback();
-
   setStatus('正在加载温哥华赛段…');
   state.segments = await loadSegments();
 
@@ -197,6 +209,7 @@ async function main() {
 
   computeScores();
   renderMap();
+  renderBrowser();
   updateAuthUI();
   setStatus('');
 }
@@ -208,11 +221,21 @@ window.addEventListener('DOMContentLoaded', () => {
     else openLoginModal();
   });
   $('login-submit').addEventListener('click', () => {
-    const name = $('login-name').value.trim();
-    auth.login(name);
+    auth.login($('login-name').value.trim());
     closeLoginModal();
     updateAuthUI();
   });
   $('login-cancel').addEventListener('click', closeLoginModal);
+
+  $('seg-search').addEventListener('input', renderBrowser);
+  document.querySelectorAll('#seg-filters button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#seg-filters button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.diffFilter = btn.getAttribute('data-diff');
+      renderBrowser();
+    });
+  });
+
   main().catch(e => setStatus('出错了：' + e.message));
 });
