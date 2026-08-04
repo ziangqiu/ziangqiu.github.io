@@ -70,8 +70,35 @@ function setStatus(msg) {
   el.style.display = msg ? '' : 'none';
 }
 
+// 地图覆盖层：加载中提示 / 出错时给出明确信息（避免白屏）
+function hideMapOverlay() {
+  const el = $('map-overlay');
+  if (el) el.classList.add('hidden');
+}
+
+function showMapError(msg) {
+  const el = $('map-overlay');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('error');
+  el.classList.remove('hidden');
+}
+
+let mapReady = false;
+
 async function main() {
-  initMap(CONFIG.city, CONFIG.city.zoom);
+  // 1. 初始化地图（失败也不影响风速数据展示，避免整页白屏）
+  try {
+    if (typeof L === 'undefined') {
+      throw new Error('地图组件 (Leaflet) 未能加载');
+    }
+    initMap(CONFIG.city, CONFIG.city.zoom);
+    mapReady = true;
+    hideMapOverlay();
+  } catch (e) {
+    showMapError('地图加载失败：' + e.message + '。可能是当前网络无法访问地图资源，请刷新或稍后重试。下方风速数据仍可正常显示。');
+  }
+
   setStatus('正在获取温哥华实时风向（覆盖全城）…');
 
   // 全城网格采样风向（独立于点，赛段为空也能显示风场）
@@ -87,11 +114,14 @@ async function main() {
       : null)
     .filter(Boolean);
 
-  const cw = await fetchWind(CONFIG.city.lat, CONFIG.city.lng);
-  state.cityWind = currentWind(cw);
+  const cw = await fetchWind(CONFIG.city.lat, CONFIG.city.lng).catch(() => null);
+  state.cityWind = cw ? currentWind(cw) : null;
 
-  drawSegments([], null);
-  drawWindFlow(state.windPoints);
+  // 3. 渲染（地图不可用时跳过地图相关绘制）
+  if (mapReady) {
+    drawSegments([], null);
+    drawWindFlow(state.windPoints);
+  }
   renderWindCard();
   renderRecommendations();
   renderBrowser();

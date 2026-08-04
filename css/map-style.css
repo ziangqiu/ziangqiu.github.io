@@ -28,3 +28,33 @@
 .leaflet-zoom-hide.wind-particle-canvas {
   will-change: transform;
 }
+
+/* ---------- 地图加载/错误覆盖层（CDN 失败时不白屏） ---------- */
+.map-wrap {
+  position: relative;
+}
+
+.map-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.88);
+  color: #555;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  z-index: 600;
+  pointer-events: none;
+}
+
+.map-overlay.error {
+  color: #b3261e;
+  background: rgba(255, 244, 244, 0.96);
+}
+
+.map-overlay.hidden {
+  display: none;
+}
