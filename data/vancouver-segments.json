@@ -1,0 +1,113 @@
+{
+  "_note": "温哥华热门骑行赛段起始数据集。bearing 由起终点在 JS 中实时计算。stravaId 留空时直接使用本地坐标；填入真实 Strava 赛段 ID 后，点击「连接 Strava」即可拉取官方几何/名称。坐标与名称为示意，请按需替换为你的常用 KOM 赛段。",
+  "segments": [
+    {
+      "id": "stanley-seawall-n",
+      "name": "Stanley Park Seawall (北段)",
+      "category": "flat",
+      "start": [49.2950, -123.1350],
+      "end": [49.3055, -123.1305],
+      "stravaId": null,
+      "note": "海堤北段，沿海平路，顺风收益明显"
+    },
+    {
+      "id": "lions-gate-n",
+      "name": "Lions Gate Bridge (北行爬坡)",
+      "category": "climb",
+      "start": [49.3030, -123.1350],
+      "end": [49.3255, -123.1400],
+      "stravaId": null,
+      "note": "狮门大桥北向爬坡，长桥侧风影响大"
+    },
+    {
+      "id": "cypress-bowl",
+      "name": "Cypress Bowl Road",
+      "category": "climb",
+      "start": [49.3400, -123.2000],
+      "end": [49.3705, -123.2050],
+      "stravaId": null,
+      "note": "西温经典长爬坡，著名 KOM 路段"
+    },
+    {
+      "id": "burnaby-mtn",
+      "name": "Burnaby Mountain (SFU)",
+      "category": "climb",
+      "start": [49.2500, -122.9500],
+      "end": [49.2780, -122.9200],
+      "stravaId": null,
+      "note": "通往 SFU 的山顶爬坡"
+    },
+    {
+      "id": "iona-beach",
+      "name": "Iona Beach (机场防风堤)",
+      "category": "flat",
+      "start": [49.2100, -123.1900],
+      "end": [49.2205, -123.2000],
+      "stravaId": null,
+      "note": "机场旁极开阔平路，常年大风"
+    },
+    {
+      "id": "richmond-dyke",
+      "name": "Richmond Dyke (东西防风堤)",
+      "category": "flat",
+      "start": [49.1700, -123.1800],
+      "end": [49.1700, -123.1000],
+      "stravaId": null,
+      "note": "列治文河堤，东西向平路，典型顺风冲刺段"
+    },
+    {
+      "id": "ubc-pgr",
+      "name": "UBC Point Grey Road",
+      "category": "rolling",
+      "start": [49.2700, -123.1900],
+      "end": [49.2600, -123.1500],
+      "stravaId": null,
+      "note": "UBC 一带起伏路"
+    },
+    {
+      "id": "spanish-banks",
+      "name": "Spanish Banks",
+      "category": "flat",
+      "start": [49.2750, -123.2000],
+      "end": [49.2700, -123.1700],
+      "stravaId": null,
+      "note": "西班牙堤岸平路"
+    },
+    {
+      "id": "taylor-way",
+      "name": "Taylor Way (British Properties)",
+      "category": "climb",
+      "start": [49.3300, -123.1400],
+      "end": [49.3500, -123.1450],
+      "stravaId": null,
+      "note": "西温 British Properties 爬坡"
+    },
+    {
+      "id": "kits-seawall",
+      "name": "Kitsilano False Creek Seawall",
+      "category": "flat",
+      "start": [49.2720, -123.1400],
+      "end": [49.2700, -123.1100],
+      "stravaId": null,
+      "note": "False Creek 海堤东向平路"
+    },
+    {
+      "id": "grandview-hwy",
+      "name": "Grandview Highway",
+      "category": "rolling",
+      "start": [49.2500, -123.0500],
+      "end": [49.2700, -123.0200],
+      "stravaId": null,
+      "note": "本拿比东向起伏路"
+    },
+    {
+      "id": "cambie-south",
+      "name": "Cambie St (南向)",
+      "category": "flat",
+      "start": [49.2600, -123.1200],
+      "end": [49.2300, -123.1150],
+      "stravaId": null,
+      "note": "温哥华市区南北向平路"
+    }
+  ]
+}
