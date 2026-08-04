@@ -11,10 +11,14 @@ export function initMap(center, zoom) {
   // 强制使用 SVG renderer，确保 CSS SVG filter（手绘涂鸦效果）生效
   const svgRenderer = L.svg({ padding: 0.5 });
   map = L.map('map', { renderer: svgRenderer }).setView([center.lat, center.lng], zoom);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  const tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '© OpenStreetMap'
   }).addTo(map);
+  // 底图瓦片加载失败时给出温和提示（避免灰白底图让人误以为网站坏了）
+  tiles.on('tileerror', () => {
+    map.getContainer().classList.add('map-tiles-failed');
+  });
   segmentLayer = L.layerGroup().addTo(map);
 
   // 密集风场粒子层（默认显示，海军蓝加粗加长拖尾）

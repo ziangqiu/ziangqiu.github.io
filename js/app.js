@@ -41,7 +41,7 @@ function fmtTime(d) {
 function renderWindCard() {
   const c = state.cityWind;
   if (!c) {
-    $('wind-card').innerHTML = '<h3>当前温哥华风向</h3><p class="muted small">正在获取实时风向…</p>';
+    $('wind-card').innerHTML = '<h3>当前温哥华风向</h3><p class="muted small">实时风向数据暂不可用（可能受网络限制，请稍后刷新重试）。</p>';
     return;
   }
   $('wind-card').innerHTML = `
@@ -117,10 +117,12 @@ async function main() {
   const cw = await fetchWind(CONFIG.city.lat, CONFIG.city.lng).catch(() => null);
   state.cityWind = cw ? currentWind(cw) : null;
 
-  // 3. 渲染（地图不可用时跳过地图相关绘制）
+  // 3. 渲染（地图不可用时跳过地图相关绘制；无真实风数据时也不画虚假风场）
   if (mapReady) {
     drawSegments([], null);
-    drawWindFlow(state.windPoints);
+    if (state.windPoints.length) {
+      drawWindFlow(state.windPoints);
+    }
   }
   renderWindCard();
   renderRecommendations();

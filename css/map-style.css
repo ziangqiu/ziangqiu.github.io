@@ -58,3 +58,24 @@
 .map-overlay.hidden {
   display: none;
 }
+
+/* 地图底图瓦片加载失败时的温和提示（不挡风场，仅作背景说明） */
+#map.map-tiles-failed {
+  background: #e8eef3;
+}
+
+#map.map-tiles-failed::after {
+  content: "地图底图加载失败（可能受网络限制），但风向数据正常。";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  text-align: center;
+  color: #5a6b7b;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  pointer-events: none;
+  z-index: 0;
+}
