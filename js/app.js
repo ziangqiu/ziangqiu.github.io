@@ -2,7 +2,7 @@ import { CONFIG } from './config.js';
 import { bearing, midpoint } from './geo.js';
 import { fetchWind, currentWind } from './wind.js';
 import { scoreSegment, rank, labelFor, colorFor, windTo } from './score.js';
-import { initMap, drawSegments, drawWindArrows, highlightSegment } from './map.js';
+import { initMap, drawSegments, drawWindFlow, highlightSegment } from './map.js';
 import * as auth from './auth.js';
 
 const state = {
@@ -49,9 +49,9 @@ function windPoints() {
 }
 
 // ---------- 地图 ----------
-function renderMap({ loggedIn } = {}) {
+function renderMap() {
   drawSegments(state.scored, onSelectSegment);
-  drawWindArrows(windPoints(), loggedIn);
+  drawWindFlow(windPoints()); // 风场粒子流默认铺满地图（Apple Weather 风格）
 }
 
 function onSelectSegment(s) {
@@ -208,14 +208,14 @@ async function main() {
   state.cityWind = currentWind(cw);
 
   computeScores();
-  renderMap({ loggedIn: auth.isLoggedIn() });
+  renderMap();
   renderBrowser();
   updateAuthUI();
   setStatus('');
 
-  // 登录/登出时按新状态重绘地图（风向箭头样式切换）
+  // 登录/登出时重绘赛段与侧边栏（风场粒子流保持默认显示）
   auth.subscribeAuth(() => {
-    renderMap({ loggedIn: auth.isLoggedIn() });
+    renderMap();
     updateAuthUI();
   });
 }

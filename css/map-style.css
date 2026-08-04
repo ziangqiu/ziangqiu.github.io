@@ -1,35 +1,5 @@
 /* 地图视觉增强：Apple 天气风格风向箭头 + 手绘涂鸦赛段描线 */
 
-/* ---------- 风向箭头 ---------- */
-.wind-arrow-wrap {
-  background: transparent !important;
-  border: none !important;
-}
-
-.wind-arrow {
-  transform-origin: 50% 50%;
-  transition: transform 0.6s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-
-.wind-arrow-svg {
-  display: block;
-  overflow: visible;
-}
-
-@keyframes windPulse {
-  0%   { opacity: 0.55; transform: scale(0.92); }
-  50%  { opacity: 1;    transform: scale(1.08); }
-  100% { opacity: 0.55; transform: scale(0.92); }
-}
-
-.wind-arrow.pulse {
-  animation: windPulse 2.4s ease-in-out infinite;
-}
-
 /* ---------- 赛段手绘涂鸦描线 ---------- */
 .rough-seg {
   filter: url(#rough);
@@ -42,4 +12,19 @@
 /* Leaflet SVG 渲染时，滤镜需要足够大的滤镜区域以免被裁切 */
 .leaflet-overlay-pane svg {
   overflow: visible;
+}
+
+/* ---------- 风场粒子 Canvas 覆盖层 ---------- */
+.wind-particle-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  /* 让粒子流位于 tiles 之上、SVG 覆盖物/Popup 之下 */
+  z-index: 1;
+}
+
+/* 缩放动画期间 Leaflet 会自动隐藏 leaflet-zoom-hide 元素，避免错位 */
+.leaflet-zoom-hide.wind-particle-canvas {
+  will-change: transform;
 }

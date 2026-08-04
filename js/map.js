@@ -1,10 +1,10 @@
 // 地图渲染（依赖全局 Leaflet，由 index.html 的 CDN 引入）
 import { colorFor, labelFor } from './score.js';
-import { destination } from './geo.js';
+import { WindParticleLayer } from './wind-particles.js';
 
 let map = null;
 let segmentLayer = null;
-let windLayer = null;
+let windLayer = null; // WindParticleLayer canvas overlay
 const lineMap = {}; // id -> polyline
 
 export function initMap(center, zoom) {
@@ -16,7 +16,16 @@ export function initMap(center, zoom) {
     attribution: '© OpenStreetMap'
   }).addTo(map);
   segmentLayer = L.layerGroup().addTo(map);
-  windLayer = L.layerGroup().addTo(map);
+
+  // Apple Weather 风格的密集风场粒子层（默认显示）
+  windLayer = new WindParticleLayer({
+    maxParticles: 420,
+    trailLength: 10,
+    baseSpeed: 0.075,
+    spawnRate: 4,
+    sampleInterval: 3
+  }).addTo(map);
+
   return map;
 }
 
@@ -62,52 +71,16 @@ export function drawSegments(scored, onSelect) {
   if (bounds.length) map.fitBounds(bounds, { padding: [40, 40] });
 }
 
-function windArrowIcon(angleDeg, speed) {
-  const size = 22 + Math.min(speed, 40) / 40 * 8; // 22..30
-  const svg = `<svg class="wind-arrow-svg" viewBox="0 0 24 24" width="${size}" height="${size}">
-    <defs>
-      <linearGradient id="windGrad" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%"  stop-color="#7fc8ff"/>
-        <stop offset="100%" stop-color="#0a84ff"/>
-      </linearGradient>
-      <filter id="windShadow" x="-40%" y="-40%" width="180%" height="180%">
-        <feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-color="#003366" flood-opacity="0.35"/>
-      </filter>
-    </defs>
-    <path d="M12 2 L12 20 M12 20 L6 13 M12 20 L18 13"
-          fill="none" stroke="url(#windGrad)" stroke-width="2.4"
-          stroke-linecap="round" stroke-linejoin="round" filter="url(#windShadow)"/>
-  </svg>`;
-  return L.divIcon({
-    className: 'wind-arrow-wrap',
-    html: `<div class="wind-arrow pulse" style="transform: rotate(${angleDeg}deg); width:${size}px;height:${size}px">${svg}</div>`,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2]
-  });
-}
-
-export function drawWindArrows(points, loggedIn) {
-  windLayer.clearLayers();
-  points.forEach(p => {
-    const to = (p.dirFrom + 180) % 360;
-    if (!loggedIn) {
-      // 未登录：保留原来的蓝色虚线段 + 圆点
-      const len = 0.02 + Math.min(p.speed, 40) / 40 * 0.03;
-      const head = destination([p.lat, p.lng], to, len);
-      L.polyline([[p.lat, p.lng], head], {
-        color: '#2563eb', weight: 3, opacity: 0.9, dashArray: '4 4'
-      }).addTo(windLayer);
-      L.circleMarker([p.lat, p.lng], {
-        radius: 3, color: '#2563eb', fillColor: '#2563eb', fillOpacity: 1
-      }).addTo(windLayer)
-        .bindTooltip(`${Math.round(p.speed)} km/h · 风从 ${Math.round(p.dirFrom)}°`);
-    } else {
-      // 登录后：Apple 天气风格有质感箭头
-      L.marker([p.lat, p.lng], { icon: windArrowIcon(to, p.speed) })
-        .addTo(windLayer)
-        .bindTooltip(`${Math.round(p.speed)} km/h · 风从 ${Math.round(p.dirFrom)}°`);
-    }
-  });
+export function drawWindFlow(points) {
+  if (!windLayer) return;
+  const avg = points.length
+    ? points.reduce((a, p) => a + p.speed, 0) / points.length
+    : 10;
+  const fallback = points.length
+    ? { dirFrom: points[0].dirFrom, speed: avg }
+    : { dirFrom: 270, speed: 10 };
+  windLayer.setWind(points, fallback);
+  windLayer.setVisible(true);
 }
 
 export function highlightSegment(scored, id) {
