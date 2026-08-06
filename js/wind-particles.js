@@ -30,7 +30,7 @@ function windVector(dirFrom, speed) {
 export const WindParticleLayer = L.Layer.extend({
   options: {
     maxParticles: 600,    // total particles on screen (denser)
-    trailLength: 66,      // base history length (3x longer)
+    trailLength: 200,     // base history length (long sweeping tails)
     baseSpeed: 0.085,     // px per frame per km/h
     spawnRate: 6,         // particles spawned per frame (modulated by avg wind)
     sampleInterval: 3,    // resample wind every N frames for performance
@@ -211,7 +211,7 @@ export const WindParticleLayer = L.Layer.extend({
 
       p.history.push({ x: p.x, y: p.y });
       // 风越大拖尾越长（明显加长）
-      const dynamicLen = Math.min(trailBase + Math.floor((p.speed || 10) / 3), 120);
+      const dynamicLen = Math.min(trailBase + Math.floor((p.speed || 10) / 3), 400);
       if (p.history.length > dynamicLen) p.history.shift();
 
       const out = p.x < -margin || p.x > this._width + margin ||
