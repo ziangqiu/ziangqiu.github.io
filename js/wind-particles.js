@@ -29,9 +29,9 @@ function windVector(dirFrom, speed) {
 
 export const WindParticleLayer = L.Layer.extend({
   options: {
-    maxParticles: 900,    // total particles on screen (denser)
-    trailLength: 500,     // base history length (ultra long sweeping tails)
-    baseSpeed: 0.085,     // px per frame per km/h
+    maxParticles: 1100,   // total particles on screen (denser)
+    trailLength: 200,     // history point count = REAL tail-length knob (life is tied to this)
+    baseSpeed: 0.16,      // px per frame per km/h — main lever for visible tail length
     spawnRate: 8,         // particles spawned per frame (modulated by avg wind)
     sampleInterval: 3,    // resample wind every N frames for performance
     lineCap: 'round',
@@ -145,7 +145,8 @@ export const WindParticleLayer = L.Layer.extend({
     const latlng = this._map.containerPointToLatLng([x, y]);
     const w = this._windAt(latlng.lat, latlng.lng);
     const speedFactor = this.options.baseSpeed * (0.8 + Math.random() * 0.4);
-    const life = 100 + Math.random() * 160;
+    // 存活帧数与 trailLength 挂钩 → 让 trailLength 真正决定拖尾长度
+    const life = Math.round(this.options.trailLength * (0.55 + Math.random() * 0.7));
 
     this._particles.push({
       x,
@@ -240,9 +241,9 @@ export const WindParticleLayer = L.Layer.extend({
 
       const lifeRatio = Math.max(0, p.life / p.maxLife);
       const headSpeed = p.speed || 10;
-      // 明显加粗：头部最粗、尾部略细
-      const headWidth = Math.min(0.7, 0.3 + headSpeed / 70);
-      const tailWidth = 0.2;
+      // 头部最粗、尾部略细（整体偏细，更精致）
+      const headWidth = Math.min(0.5, 0.2 + headSpeed / 90);
+      const tailWidth = 0.15;
 
       for (let i = 1; i < hist.length; i++) {
         const t = i / (hist.length - 1); // 0 tail -> 1 head
