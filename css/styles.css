@@ -1,145 +1,429 @@
+/* ═══ Vancouver KOM — iOS Design System ═══ */
+
 :root {
-  --bg: #f7f8fa;
-  --panel: #ffffff;
-  --ink: #1a1d21;
-  --muted: #6b7280;
-  --line: #e5e7eb;
-  --accent: #2563eb;
-  --accent-ink: #ffffff;
-  --radius: 14px;
-  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.05);
+  /* —— iOS Color Palette —— */
+  --bg: #F2F2F7;
+  --panel-glass: rgba(255, 255, 255, 0.72);
+  --panel-solid: #FFFFFF;
+  --ink: #1C1C1E;
+  --ink-secondary: #3C3C43;
+  --muted: #8E8E93;
+  --muted-light: #AEAEB2;
+  --line: rgba(60, 60, 67, 0.12);
+  --accent: #1D3461;
+  --accent-light: #2A4A8A;
+  --accent-bg: rgba(29, 52, 97, 0.06);
+  --accent-ink: #FFFFFF;
+  --input-bg: rgba(118, 118, 128, 0.08);
+  --input-bg-focus: rgba(118, 118, 128, 0.14);
+
+  /* —— Radii —— */
+  --radius-xl: 24px;
+  --radius-lg: 20px;
+  --radius: 16px;
+  --radius-sm: 12px;
+  --radius-xs: 8px;
+
+  /* —— Shadows (iOS: ultra-subtle, barely there) —— */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.05), 0 0 0.5px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.07), 0 0 1px rgba(0, 0, 0, 0.04);
+
+  /* —— Transitions (iOS spring feel) —— */
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --transition: 0.22s var(--ease);
+  --transition-fast: 0.12s var(--ease);
 }
 
-* { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; }
+/* ═══ Reset & Base ═══ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
-    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont,
+    "SF Pro Text", "SF Pro Display",
+    "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   background: var(--bg);
   color: var(--ink);
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  letter-spacing: -0.01em;
+  line-height: 1.45;
 }
 
-/* Header */
+/* Subtle ambient glow at top (iOS depth cue) */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: radial-gradient(ellipse 80% 40% at 50% -15%, rgba(29,52,97,0.035), transparent);
+  pointer-events: none; z-index: -1;
+}
+
+/* ═══ Header — iOS Frosted Glass Navigation Bar ═══ */
 .site-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 24px; background: var(--panel);
-  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 26px;
+  background: var(--panel-glass);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 0.5px solid var(--line);
 }
-.brand { display: flex; align-items: center; gap: 12px; }
-.logo { font-size: 28px; }
-.site-header h1 { font-size: 18px; margin: 0; letter-spacing: .2px; }
-.tagline { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
-.actions { display: flex; gap: 10px; }
-
-.btn {
-  border: 1px solid var(--line); background: #fff; color: var(--ink);
-  padding: 8px 14px; border-radius: 10px; font-size: 14px; cursor: pointer;
-  transition: .15s ease;
+.brand { display: flex; align-items: center; }
+.site-header h1 {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--ink);
 }
-.btn:hover { border-color: #cbd5e1; }
-.btn-primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-.btn-primary:hover { filter: brightness(1.05); }
-.btn-strava { background: #fc5200; color: #fff; border-color: #fc5200; }
-.btn-strava.disabled { opacity: .5; cursor: not-allowed; }
 
-/* Status bar */
+/* ═══ Status Bar ═══ */
 .status-bar {
-  background: #eef2ff; color: #3730a3; padding: 8px 24px; font-size: 13px;
-  border-bottom: 1px solid #e0e7ff;
+  background: var(--accent-bg);
+  color: var(--accent);
+  padding: 10px 26px;
+  font-size: 13px;
+  font-weight: 500;
+  border-bottom: 0.5px solid rgba(29, 52, 97, 0.08);
+  letter-spacing: -0.01em;
 }
 
-/* Layout */
+/* ═══ Layout ═══ */
 .layout {
-  flex: 1; display: grid; grid-template-columns: 1fr 360px; gap: 0;
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 0;
   min-height: 0;
 }
-.map-wrap { position: relative; }
+.map-wrap {
+  position: relative;
+  background: #E5E9EC;  /* fallback while tiles load */
+}
 #map { position: absolute; inset: 0; }
 
+/* ═══ Legend — iOS Frosted Floating Pill ═══ */
 .legend {
-  position: absolute; left: 12px; bottom: 12px; z-index: 500;
-  background: rgba(255,255,255,.92); border: 1px solid var(--line);
-  border-radius: 10px; padding: 8px 10px; display: flex; flex-wrap: wrap; gap: 10px;
-  font-size: 12px; color: var(--muted); box-shadow: var(--shadow);
+  position: absolute;
+  left: 18px; bottom: 22px;
+  z-index: 500;
+  background: rgba(255, 255, 255, 0.74);
+  backdrop-filter: saturate(180%) blur(16px);
+  -webkit-backdrop-filter: saturate(180%) blur(16px);
+  border: 0.5px solid rgba(60, 60, 67, 0.1);
+  border-radius: 999px;
+  padding: 7px 16px;
+  display: flex; flex-wrap: wrap; gap: 10px;
+  font-size: 12px; color: var(--muted);
+  font-weight: 500;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  letter-spacing: -0.01em;
 }
-.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
-.legend i.arrow { border-radius: 50%; }
+.legend i {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: -0.5px;
+}
 
+/* ═══ Sidebar — iOS System Background ═══ */
 .sidebar {
-  background: var(--panel); border-left: 1px solid var(--line);
-  padding: 16px; overflow-y: auto;
+  background: var(--bg);
+  border-left: 0.5px solid var(--line);
+  padding: 22px 22px 32px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-/* Gate */
+/* ═══ Cards — iOS Rounded-Rect Panels ═══ */
+.card {
+  background: var(--panel-solid);
+  border: none;
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-xs);
+  transition: box-shadow var(--transition);
+}
+.card h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.015em;
+}
+
+/* ═══ Typography Utilities ═══ */
+.muted { color: var(--muted); }
+.small { font-size: 12px; line-height: 1.55; }
+
+/* ═══ Wind Card — iOS Weather-Inspired ═══ */
+.big-wind {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 4px 0 2px;
+}
+.wind-num {
+  font-size: 52px;
+  font-weight: 260;
+  line-height: 0.92;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+}
+.wind-num span {
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: 3px;
+}
+.wind-dir {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  padding-top: 4px;
+}
+
+/* ═══ Key-Value Rows ═══ */
+.kv {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-top: 0.5px solid var(--line);
+  font-size: 13px;
+  color: var(--ink-secondary);
+  letter-spacing: -0.01em;
+}
+.kv:first-of-type { border-top: none; }
+.kv span:last-child { font-weight: 510; }
+
+/* ═══ Segment Search — iOS Search Field ═══ */
+#seg-search {
+  width: 100%;
+  padding: 11px 15px;
+  margin-bottom: 12px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  background: var(--input-bg);
+  color: var(--ink);
+  outline: none;
+  transition: background var(--transition-fast);
+  letter-spacing: -0.01em;
+}
+#seg-search::placeholder {
+  color: var(--muted-light);
+  font-weight: 400;
+}
+#seg-search:focus {
+  background: var(--input-bg-focus);
+}
+
+/* ═══ Filter Pills — iOS Segmented / Pill Style ═══ */
+.seg-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.seg-filters button {
+  border: none;
+  background: var(--input-bg);
+  color: var(--ink-secondary);
+  padding: 7px 15px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  letter-spacing: -0.01em;
+}
+.seg-filters button:hover {
+  background: var(--input-bg-focus);
+}
+.seg-filters button.active {
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 510;
+}
+
+/* ═══ Recommendation List — iOS Table-Row Style ═══ */
+.rec-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rec-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 15px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.rec-item:hover {
+  background: rgba(118, 118, 128, 0.06);
+  transform: scale(1.012);
+}
+.rec-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex: none;
+}
+.rec-main { flex: 1; min-width: 0; }
+.rec-name {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+.rec-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.rec-prob {
+  text-align: right;
+  font-size: 20px;
+  font-weight: 260;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.rec-prob span {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+/* ═══ Difficulty Tags ═══ */
+.diff-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 999px;
+  margin-left: 5px;
+  vertical-align: 1px;
+  letter-spacing: -0.01em;
+}
+.diff-easy   { background: rgba(52,199,89,0.12);  color: #1B7F3B; }
+.diff-moderate { background: rgba(255,179,64,0.12); color: #B06400; }
+.diff-hard   { background: rgba(255,107,53,0.12); color: #B83800; }
+.diff-expert { background: rgba(255,69,58,0.12);  color: #BE1E1E; }
+.sep { border: none; border-top: 0.5px solid var(--line); margin: 12px 0; }
+
+/* ═══ Gate (Login — retained for reference) ═══ */
 .gate { text-align: center; padding: 40px 16px; }
 .gate .lock { font-size: 40px; }
 .gate h3 { margin: 12px 0 8px; }
 .gate .btn { margin-top: 14px; }
 
-/* Cards */
-.card { background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; margin-bottom: 14px; }
-.card h3 { margin: 0 0 10px; font-size: 15px; }
-.muted { color: var(--muted); }
-.small { font-size: 12px; }
-
-.big-wind { display: flex; align-items: center; gap: 16px; }
-.wind-num { font-size: 40px; font-weight: 700; line-height: 1; }
-.wind-num span { font-size: 14px; font-weight: 400; color: var(--muted); margin-left: 4px; }
-.wind-dir { font-size: 13px; color: var(--muted); }
-
-.kv { display: flex; justify-content: space-between; padding: 4px 0; border-top: 1px dashed var(--line); font-size: 13px; }
-.kv:first-of-type { border-top: none; }
-
-/* Recommendations */
-.rec-list { display: flex; flex-direction: column; gap: 8px; }
-.rec-item {
-  display: flex; align-items: center; gap: 10px; padding: 10px;
-  background: #fff; border: 1px solid var(--line); border-radius: 10px; cursor: pointer;
-  transition: .15s;
+/* ═══ Buttons — iOS Rounded Style ═══ */
+.btn {
+  border: none;
+  background: var(--input-bg);
+  color: var(--ink);
+  padding: 10px 18px;
+  border-radius: var(--radius-xs);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  letter-spacing: -0.01em;
 }
-.rec-item:hover { border-color: var(--accent); }
-.rec-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
-.rec-main { flex: 1; min-width: 0; }
-.rec-name { font-size: 14px; font-weight: 600; }
-.rec-sub { font-size: 12px; color: var(--muted); }
-.rec-prob { text-align: right; font-size: 16px; font-weight: 700; line-height: 1.1; }
-.rec-prob span { font-size: 11px; font-weight: 400; color: var(--muted); }
+.btn:hover { background: var(--input-bg-focus); }
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.btn-primary:hover { background: var(--accent-light); }
+.btn-strava { background: #FC4C02; color: #fff; }
+.btn-strava:hover { background: #E04300; }
+.btn-strava.disabled { opacity: 0.5; cursor: not-allowed; }
+.actions { display: flex; gap: 10px; }
 
-/* Footer */
-.site-footer { padding: 12px 24px; background: var(--panel); border-top: 1px solid var(--line); }
-.site-footer p { margin: 0; font-size: 12px; color: var(--muted); text-align: center; }
-
-/* Modal */
+/* ═══ Modal — iOS Sheet Style ═══ */
 .modal {
-  position: fixed; inset: 0; background: rgba(15,23,42,.45);
-  display: flex; align-items: center; justify-content: center; z-index: 1000;
+  position: fixed; inset: 0;
+  background: rgba(28,28,30,0.3);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
 }
-.modal-box { background: #fff; border-radius: var(--radius); padding: 22px; width: 320px; box-shadow: var(--shadow); }
-.modal-box h3 { margin: 0 0 6px; }
+.modal-box {
+  background: var(--panel-solid);
+  border-radius: var(--radius-lg);
+  padding: 26px;
+  width: 350px;
+  box-shadow: var(--shadow-lg);
+}
+.modal-box h3 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
 .modal-box input {
-  width: 100%; padding: 10px; margin: 12px 0; border: 1px solid var(--line);
-  border-radius: 10px; font-size: 14px;
+  width: 100%;
+  padding: 12px 14px;
+  margin: 14px 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  background: var(--input-bg);
+  outline: none;
+  transition: background var(--transition-fast);
 }
-.modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.modal-box input:focus { background: var(--input-bg-focus); }
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
 
-/* Responsive */
+/* ═══ Footer ═══ */
+.site-footer {
+  padding: 13px 26px;
+  background: var(--panel-solid);
+  border-top: 0.5px solid var(--line);
+}
+.site-footer p {
+  margin: 0;
+  font-size: 11px;
+  color: var(--muted-light);
+  text-align: center;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* ═══ Responsive ═══ */
 @media (max-width: 880px) {
-  .layout { grid-template-columns: 1fr; grid-template-rows: 60vh auto; }
-  .sidebar { border-left: none; border-top: 1px solid var(--line); }
-  .tagline { display: none; }
+  .layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: 55vh auto;
+  }
+  .sidebar {
+    border-left: none;
+    border-top: 0.5px solid var(--line);
+    padding: 18px 18px 28px;
+  }
+  .site-header { padding: 10px 18px; }
+  .site-header h1 { font-size: 17px; }
+  .legend { left: 12px; bottom: 14px; padding: 6px 12px; font-size: 11px; }
 }
-
-/* 赛段浏览 / 查询 */
-#seg-search { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid var(--line); border-radius: 10px; font-size: 14px; }
-.seg-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
-.seg-filters button { border: 1px solid var(--line); background: #fff; color: var(--muted); padding: 5px 10px; border-radius: 999px; font-size: 12px; cursor: pointer; transition: .15s; }
-.seg-filters button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-.diff-tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 999px; margin-left: 4px; vertical-align: 1px; }
-.diff-easy { background: #dcfce7; color: #166534; }
-.diff-moderate { background: #fef9c3; color: #854d0e; }
-.diff-hard { background: #ffedd5; color: #9a3412; }
-.diff-expert { background: #fee2e2; color: #991b1b; }
-.sep { border: none; border-top: 1px dashed var(--line); margin: 10px 0; }
