@@ -29,9 +29,9 @@ function windVector(dirFrom, speed) {
 
 export const WindParticleLayer = L.Layer.extend({
   options: {
-    maxParticles: 1000,   // total particles on screen
-    trailLength: 120,     // history point count — shorter, brighter strokes (was too spread-out)
-    baseSpeed: 0.16,      // px per frame per km/h
+    maxParticles: 900,    // total particles on screen
+    trailLength: 180,     // history point count — longer streaks
+    baseSpeed: 0.30,      // px per frame per km/h — faster, smoother flow
     sampleInterval: 3,    // resample wind every N frames for performance
     lineCap: 'round',
     lineJoin: 'round'
@@ -234,41 +234,32 @@ export const WindParticleLayer = L.Layer.extend({
     ctx.lineCap = this.options.lineCap;
     ctx.lineJoin = this.options.lineJoin;
 
+    // 性能关键：每条风线只做【一次】描边（用渐变实现头实尾淡），
+    // 不再逐段描边、不再用 shadowBlur —— 之前卡顿就是这两点造成的。
     for (const p of this._particles) {
       const hist = p.history;
-      if (hist.length < 2) continue;
+      const n = hist.length;
+      if (n < 2) continue;
 
-      const lifeRatio = Math.max(0.5, p.life / p.maxLife);
+      const lifeRatio = Math.max(0.4, p.life / p.maxLife);
+      const head = hist[n - 1];
+      const tail = hist[0];
       const headSpeed = p.speed || 10;
-      // 粗一些、清楚可见，但头部到尾部仍有渐变避免死板
-      const headWidth = Math.min(2.0, 0.9 + headSpeed / 40);
-      const tailWidth = 1.0;
+      const lineWidth = Math.min(2.0, 0.9 + headSpeed / 40);
 
-      // 每条风线加一个极淡的白色外发光，让海军蓝在复杂地图上跳出来
-      ctx.shadowBlur = 3;
-      ctx.shadowColor = 'rgba(255,255,255,0.35)';
+      // 沿「尾→头」的渐变：尾透明、头浓，营造流星拖尾（不逐段描边）
+      const grad = ctx.createLinearGradient(tail.x, tail.y, head.x, head.y);
+      grad.addColorStop(0, `rgba(29,52,97,${(0.35 * lifeRatio).toFixed(3)})`);
+      grad.addColorStop(1, `rgba(29,52,97,${(0.85 * lifeRatio).toFixed(3)})`);
 
-      for (let i = 1; i < hist.length; i++) {
-        const t = i / (hist.length - 1); // 0 tail -> 1 head
-        const x0 = hist[i - 1].x;
-        const y0 = hist[i - 1].y;
-        const x1 = hist[i].x;
-        const y1 = hist[i].y;
-
-        // 高透明度：尾部 0.75、头部 1.0，乘以 lifeRatio 最低 0.5
-        const alpha = (0.75 + 0.25 * t) * lifeRatio;
-        const width = tailWidth + t * (headWidth - tailWidth);
-
-        ctx.beginPath();
-        ctx.moveTo(x0, y0);
-        ctx.lineTo(x1, y1);
-        ctx.strokeStyle = this._colorAt(t, alpha);
-        ctx.lineWidth = width;
-        ctx.stroke();
-      }
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = lineWidth;
+      ctx.beginPath();
+      ctx.moveTo(hist[0].x, hist[0].y);
+      for (let i = 1; i < n; i++) ctx.lineTo(hist[i].x, hist[i].y);
+      ctx.stroke();
     }
-    // 一帧画完后关闭阴影，避免影响其它绘制
-    ctx.shadowBlur = 0;
+  },
     ctx.shadowColor = 'transparent';
   },
 
