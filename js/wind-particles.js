@@ -239,11 +239,11 @@ export const WindParticleLayer = L.Layer.extend({
       const hist = p.history;
       if (hist.length < 2) continue;
 
-      const lifeRatio = Math.max(0, p.life / p.maxLife);
+      const lifeRatio = Math.max(0.4, p.life / p.maxLife);
       const headSpeed = p.speed || 10;
-      // 头部最粗、尾部略细（整体偏细，更精致）
-      const headWidth = Math.min(0.5, 0.2 + headSpeed / 90);
-      const tailWidth = 0.15;
+      // 头部略粗、尾部保持清晰可见（仍是细线，但不再隐身）
+      const headWidth = Math.min(0.9, 0.45 + headSpeed / 70);
+      const tailWidth = 0.45;
 
       for (let i = 1; i < hist.length; i++) {
         const t = i / (hist.length - 1); // 0 tail -> 1 head
@@ -252,8 +252,8 @@ export const WindParticleLayer = L.Layer.extend({
         const x1 = hist[i].x;
         const y1 = hist[i].y;
 
-        // 海军蓝描线：尾巴更淡、头部更实，整体更显眼
-        const alpha = (0.22 + 0.78 * t) * lifeRatio;
+        // 海军蓝描线：整条清晰可见，头部更实、尾部略淡
+        const alpha = (0.5 + 0.5 * t) * lifeRatio;
         const width = tailWidth + t * (headWidth - tailWidth);
 
         ctx.beginPath();
