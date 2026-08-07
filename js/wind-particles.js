@@ -29,10 +29,9 @@ function windVector(dirFrom, speed) {
 
 export const WindParticleLayer = L.Layer.extend({
   options: {
-    maxParticles: 1100,   // total particles on screen (denser)
-    trailLength: 200,     // history point count = REAL tail-length knob (life is tied to this)
-    baseSpeed: 0.16,      // px per frame per km/h — main lever for visible tail length
-    spawnRate: 8,         // particles spawned per frame (modulated by avg wind)
+    maxParticles: 1000,   // total particles on screen
+    trailLength: 120,     // history point count — shorter, brighter strokes (was too spread-out)
+    baseSpeed: 0.16,      // px per frame per km/h
     sampleInterval: 3,    // resample wind every N frames for performance
     lineCap: 'round',
     lineJoin: 'round'
@@ -239,11 +238,15 @@ export const WindParticleLayer = L.Layer.extend({
       const hist = p.history;
       if (hist.length < 2) continue;
 
-      const lifeRatio = Math.max(0.4, p.life / p.maxLife);
+      const lifeRatio = Math.max(0.5, p.life / p.maxLife);
       const headSpeed = p.speed || 10;
-      // 头部略粗、尾部保持清晰可见（仍是细线，但不再隐身）
-      const headWidth = Math.min(0.9, 0.45 + headSpeed / 70);
-      const tailWidth = 0.45;
+      // 粗一些、清楚可见，但头部到尾部仍有渐变避免死板
+      const headWidth = Math.min(2.0, 0.9 + headSpeed / 40);
+      const tailWidth = 1.0;
+
+      // 每条风线加一个极淡的白色外发光，让海军蓝在复杂地图上跳出来
+      ctx.shadowBlur = 3;
+      ctx.shadowColor = 'rgba(255,255,255,0.35)';
 
       for (let i = 1; i < hist.length; i++) {
         const t = i / (hist.length - 1); // 0 tail -> 1 head
@@ -252,8 +255,8 @@ export const WindParticleLayer = L.Layer.extend({
         const x1 = hist[i].x;
         const y1 = hist[i].y;
 
-        // 海军蓝描线：整条清晰可见，头部更实、尾部略淡
-        const alpha = (0.5 + 0.5 * t) * lifeRatio;
+        // 高透明度：尾部 0.75、头部 1.0，乘以 lifeRatio 最低 0.5
+        const alpha = (0.75 + 0.25 * t) * lifeRatio;
         const width = tailWidth + t * (headWidth - tailWidth);
 
         ctx.beginPath();
@@ -264,6 +267,9 @@ export const WindParticleLayer = L.Layer.extend({
         ctx.stroke();
       }
     }
+    // 一帧画完后关闭阴影，避免影响其它绘制
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'transparent';
   },
 
   _colorAt(t, alphaBase) {
