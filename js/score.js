@@ -1,4 +1,4 @@
-import { angleDiff, toRad, bearing } from './geo.js';
+import { angleDiff, toRad, bearing } from './geo.js?v=20260810092513';
 
 // 风的「吹向」= 来自方向 + 180°
 export function windTo(dirFrom) {
