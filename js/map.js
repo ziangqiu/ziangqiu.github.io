@@ -23,11 +23,11 @@ export function initMap(center, zoom) {
 
   // 密集风场粒子层（默认显示，海军蓝加粗加长拖尾）
   windLayer = new WindParticleLayer({
-    maxParticles: 600,
-    trailLength: 22,
-    baseSpeed: 0.085,
-    spawnRate: 6,
-    sampleInterval: 3
+    maxParticles: 900,
+    trailLength: 180,
+    baseSpeed: 0.30,
+    sampleInterval: 3,
+    maxFps: 30
   }).addTo(map);
 
   return map;

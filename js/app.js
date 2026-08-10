@@ -2,7 +2,7 @@
 // 说明：登录门槛已移除，所有内容无需登录即可访问。预设赛段已清空，
 // 由用户自行在 data/vancouver-segments.json 中添加赛段。
 import { CONFIG } from './config.js';
-import { fetchWind, currentWind } from './wind.js';
+import { fetchWinds, currentWind } from './wind.js';
 import { initMap, drawSegments, drawWindFlow } from './map.js';
 
 const state = {
@@ -87,6 +87,10 @@ function showMapError(msg) {
 let mapReady = false;
 
 async function main() {
+  // Render useful, stable UI immediately; slow network requests must not leave empty cards behind.
+  renderWindCard();
+  renderRecommendations();
+  renderBrowser();
   // 1. 初始化地图（失败也不影响风速数据展示，避免整页白屏）
   try {
     if (typeof L === 'undefined') {
@@ -103,19 +107,19 @@ async function main() {
 
   // 全城网格采样风向（独立于点，赛段为空也能显示风场）
   const grid = buildWindGrid();
-  const results = await Promise.all(
-    grid.map(([lat, lng]) =>
-      fetchWind(lat, lng).then(currentWind).catch(() => null)
-    )
-  );
+  let results = [];
+  try {
+    results = (await fetchWinds([...grid, [CONFIG.city.lat, CONFIG.city.lng]])).map(currentWind);
+  } catch (_) {
+    setStatus('暂时无法取得风向数据；地图仍可使用，请稍后刷新重试。');
+  }
   state.windPoints = grid
     .map(([lat, lng], i) => results[i]
       ? { lat, lng, speed: results[i].speed, dirFrom: results[i].dirFrom }
       : null)
     .filter(Boolean);
 
-  const cw = await fetchWind(CONFIG.city.lat, CONFIG.city.lng).catch(() => null);
-  state.cityWind = cw ? currentWind(cw) : null;
+  state.cityWind = results[grid.length] || null;
 
   // 3. 渲染（地图不可用时跳过地图相关绘制；无真实风数据时也不画虚假风场）
   if (mapReady) {
@@ -127,7 +131,7 @@ async function main() {
   renderWindCard();
   renderRecommendations();
   renderBrowser();
-  setStatus('');
+  if (state.cityWind) setStatus('');
 }
 
 window.addEventListener('DOMContentLoaded', () => {

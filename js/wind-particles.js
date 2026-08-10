@@ -33,6 +33,8 @@ export const WindParticleLayer = L.Layer.extend({
     trailLength: 180,     // history point count — longer streaks
     baseSpeed: 0.30,      // px per frame per km/h — faster, smoother flow
     sampleInterval: 3,    // resample wind every N frames for performance
+    spawnRate: 6,         // new particles per render frame (adjusted for wind speed below)
+    maxFps: 30,           // cap canvas work; wind remains smooth without monopolising the browser
     lineCap: 'round',
     lineJoin: 'round'
   },
@@ -45,6 +47,7 @@ export const WindParticleLayer = L.Layer.extend({
     this._frame = 0;
     this._running = false;
     this._visible = false;
+    this._lastTickAt = 0;
   },
 
   onAdd(map) {
@@ -113,7 +116,11 @@ export const WindParticleLayer = L.Layer.extend({
     this._running = true;
     const loop = () => {
       if (!this._running) return;
-      this._tick();
+      const now = performance.now();
+      if (now - this._lastTickAt >= 1000 / this.options.maxFps) {
+        this._lastTickAt = now;
+        this._tick();
+      }
       this._animId = requestAnimationFrame(loop);
     };
     this._animId = requestAnimationFrame(loop);
@@ -163,19 +170,24 @@ export const WindParticleLayer = L.Layer.extend({
     const pts = this._windPoints;
     if (!pts.length) return windVector(this._fallback.dirFrom, this._fallback.speed);
 
-    const nearest = pts
-      .map(p => ({ ...p, dist: approxDistKm(lat, lng, p.lat, p.lng) }))
-      .sort((a, b) => a.dist - b.dist)
-      .slice(0, 3);
+    // This runs for many particles. Avoid allocating/sorting arrays on every sample.
+    const nearest = [];
+    for (const p of pts) {
+      const candidate = { p, dist: approxDistKm(lat, lng, p.lat, p.lng) };
+      let index = nearest.findIndex(item => candidate.dist < item.dist);
+      if (index < 0) index = nearest.length;
+      nearest.splice(index, 0, candidate);
+      if (nearest.length > 3) nearest.pop();
+    }
 
     if (nearest[0].dist > 35) {
       return windVector(this._fallback.dirFrom, this._fallback.speed);
     }
 
     let wx = 0, wy = 0, wt = 0;
-    for (const p of nearest) {
-      const w = 1 / Math.max(p.dist, 0.05);
-      const v = windVector(p.dirFrom, p.speed);
+    for (const item of nearest) {
+      const w = 1 / Math.max(item.dist, 0.05);
+      const v = windVector(item.p.dirFrom, item.p.speed);
       wx += v.vx * w;
       wy += v.vy * w;
       wt += w;
@@ -259,8 +271,6 @@ export const WindParticleLayer = L.Layer.extend({
       for (let i = 1; i < n; i++) ctx.lineTo(hist[i].x, hist[i].y);
       ctx.stroke();
     }
-  },
-    ctx.shadowColor = 'transparent';
   },
 
   _colorAt(t, alphaBase) {
