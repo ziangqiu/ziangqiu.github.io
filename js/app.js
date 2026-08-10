@@ -4,10 +4,17 @@
 import { CONFIG } from './config.js';
 import { fetchWinds, currentWind } from './wind.js';
 import { initMap, drawSegments, drawWindFlow } from './map.js';
+import { colorFor, labelFor, rank, scoreSegment } from './score.js';
 
 const state = {
   windPoints: [],   // 全城网格风场采样点 {lat, lng, speed, dirFrom}
-  cityWind: null
+  cityWind: null,
+  wind: null,
+  segments: [],
+  scored: [],
+  selectedId: null,
+  filter: 'all',
+  query: ''
 };
 
 const $ = id => document.getElementById(id);
@@ -28,10 +35,6 @@ function buildWindGrid() {
     }
   }
   return pts;
-}
-
-function windPoints() {
-  return state.windPoints;
 }
 
 function fmtTime(d) {
@@ -56,12 +59,107 @@ function renderWindCard() {
 
 function renderRecommendations() {
   const box = $('rec-list');
-  box.innerHTML = '<p class="muted small">地图上还没有赛段。在 <code>data/vancouver-segments.json</code> 中添加赛段后，这里会显示未来几小时最适合冲击 KOM 的推荐区域。</p>';
+  if (!state.scored.length) {
+    box.innerHTML = '<p class="muted small">正在准备赛段推荐…</p>';
+    return;
+  }
+  box.innerHTML = rank(state.scored).map(item => `
+    <button class="rec-item ${item.seg.id === state.selectedId ? 'selected' : ''}" data-segment-id="${item.seg.id}">
+      <i class="rec-dot" style="background:${colorFor(item.probability)}"></i>
+      <span class="rec-main"><span class="rec-name">${item.seg.name}</span>
+      <span class="rec-sub">最佳 ${fmtTime(item.best.time)} · 顺风 ${formatComponent(item.best.comp)}</span></span>
+      <span class="rec-prob">${Math.round(item.probability * 100)}%<span>${labelFor(item.probability)}</span></span>
+    </button>`).join('');
+  bindSegmentButtons(box);
 }
 
 function renderBrowser() {
   const box = $('seg-list');
-  box.innerHTML = '<p class="muted small">暂无赛段。你可在 <code>data/vancouver-segments.json</code> 中添加赛段（名称、起终点经纬度、距离、爬升、坡度、难度），刷新页面即可在地图上显示并在此处检索。</p>';
+  const visible = state.scored.filter(item =>
+    (state.filter === 'all' || item.seg.difficulty === state.filter) &&
+    item.seg.name.toLowerCase().includes(state.query.toLowerCase())
+  );
+  if (!visible.length) {
+    box.innerHTML = '<p class="muted small">没有符合条件的赛段。</p>';
+    return;
+  }
+  box.innerHTML = visible.map(item => `
+    <button class="rec-item ${item.seg.id === state.selectedId ? 'selected' : ''}" data-segment-id="${item.seg.id}">
+      <i class="rec-dot" style="background:${colorFor(item.probability)}"></i>
+      <span class="rec-main"><span class="rec-name">${item.seg.name}<em class="diff-tag diff-${item.seg.difficulty}">${difficultyName(item.seg.difficulty)}</em></span>
+      <span class="rec-sub">${item.seg.distance} km · ${item.seg.elevationGain} m 爬升 · ${Math.round(item.segBearing)}° 骑行方向</span></span>
+      <span class="rec-prob">›</span>
+    </button>`).join('');
+  bindSegmentButtons(box);
+}
+
+function formatComponent(value) {
+  return `${value >= 0 ? '+' : ''}${Math.round(value)} km/h`;
+}
+
+function difficultyName(value) {
+  return ({ easy: '轻松', moderate: '中等', hard: '困难', expert: '专家' })[value] || '未知';
+}
+
+function bindSegmentButtons(container) {
+  container.querySelectorAll('[data-segment-id]').forEach(button => {
+    button.addEventListener('click', () => selectSegment(button.dataset.segmentId));
+  });
+}
+
+function renderDetail(item) {
+  const card = $('detail-card');
+  if (!item || !state.cityWind) {
+    card.style.display = 'none';
+    return;
+  }
+  const now = item.hourly[0] || item.best;
+  const direction = Math.round(item.segBearing);
+  card.style.display = '';
+  card.innerHTML = `
+    <h3>已选择赛段</h3>
+    <div class="segment-title">${item.seg.name}</div>
+    <p class="muted small">${item.seg.description || ''}</p>
+    <div class="wind-fit ${now.comp > 0 ? 'favorable' : 'unfavorable'}">
+      <strong>${now.comp > 0 ? '顺风适配' : '逆风 / 侧风'}</strong>
+      <span>${Math.round(now.p * 100)}% KOM 条件</span>
+    </div>
+    <div class="kv"><span>骑行走向</span><span>${direction}°</span></div>
+    <div class="kv"><span>当前风向</span><span>从 ${Math.round(now.dirFrom)}° 吹向 ${Math.round(windTo(now.dirFrom))}°</span></div>
+    <div class="kv"><span>当前风速</span><span>${Math.round(now.speed)} km/h</span></div>
+    <div class="kv"><span>顺风分量</span><span>${formatComponent(now.comp)}</span></div>
+    <div class="kv"><span>最佳时段</span><span>${fmtTime(item.best.time)} · ${formatComponent(item.best.comp)}</span></div>`;
+}
+
+function selectSegment(id) {
+  const item = state.scored.find(s => s.seg.id === id);
+  if (!item) return;
+  state.selectedId = id;
+  if (mapReady) drawSegments(state.scored, selectSegment, id);
+  renderBrowser();
+  renderRecommendations();
+  renderDetail(item);
+}
+
+async function loadSegments() {
+  const res = await fetch('data/vancouver-segments.json');
+  if (!res.ok) throw new Error('赛段数据加载失败');
+  const data = await res.json();
+  return Array.isArray(data.segments) ? data.segments : [];
+}
+
+function bindBrowserControls() {
+  $('seg-search').addEventListener('input', event => {
+    state.query = event.target.value.trim();
+    renderBrowser();
+  });
+  $('seg-filters').addEventListener('click', event => {
+    const button = event.target.closest('[data-diff]');
+    if (!button) return;
+    state.filter = button.dataset.diff;
+    $('seg-filters').querySelectorAll('button').forEach(el => el.classList.toggle('active', el === button));
+    renderBrowser();
+  });
 }
 
 function setStatus(msg) {
@@ -91,6 +189,7 @@ async function main() {
   renderWindCard();
   renderRecommendations();
   renderBrowser();
+  bindBrowserControls();
   // 1. 初始化地图（失败也不影响风速数据展示，避免整页白屏）
   try {
     if (typeof L === 'undefined') {
@@ -108,10 +207,18 @@ async function main() {
   // 全城网格采样风向（独立于点，赛段为空也能显示风场）
   const grid = buildWindGrid();
   let results = [];
+  let windRows = [];
   try {
-    results = (await fetchWinds([...grid, [CONFIG.city.lat, CONFIG.city.lng]])).map(currentWind);
+    const [winds, segments] = await Promise.all([
+      fetchWinds([...grid, [CONFIG.city.lat, CONFIG.city.lng]]),
+      loadSegments()
+    ]);
+    windRows = winds;
+    results = winds.map(currentWind);
+    state.segments = segments;
   } catch (_) {
     setStatus('暂时无法取得风向数据；地图仍可使用，请稍后刷新重试。');
+    try { state.segments = await loadSegments(); } catch (_) {}
   }
   state.windPoints = grid
     .map(([lat, lng], i) => results[i]
@@ -119,11 +226,14 @@ async function main() {
       : null)
     .filter(Boolean);
 
-  state.cityWind = results[grid.length] || null;
+  // scoreSegment needs the complete hourly series, not just its current point.
+  state.wind = windRows[grid.length] || null;
+  state.cityWind = state.wind ? currentWind(state.wind) : null;
+  state.scored = state.wind ? state.segments.map(seg => scoreSegment(seg, state.wind, CONFIG.model, CONFIG.forecastHours)) : [];
 
   // 3. 渲染（地图不可用时跳过地图相关绘制；无真实风数据时也不画虚假风场）
   if (mapReady) {
-    drawSegments([], null);
+    drawSegments(state.scored, selectSegment, state.selectedId);
     if (state.windPoints.length) {
       drawWindFlow(state.windPoints);
     }
@@ -131,6 +241,7 @@ async function main() {
   renderWindCard();
   renderRecommendations();
   renderBrowser();
+  if (state.scored.length) selectSegment(state.scored[0].seg.id);
   if (state.cityWind) setStatus('');
 }
 

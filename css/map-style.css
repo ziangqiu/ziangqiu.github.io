@@ -24,6 +24,23 @@
   z-index: 1;
 }
 
+/* 起终点和中间箭头让用户一眼看出赛段骑行方向。 */
+.segment-endpoint,
+.segment-direction {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.22);
+}
+.segment-endpoint.start { background: #1d3461; border: 2px solid #fff; }
+.segment-endpoint.end { background: #dc2626; border: 2px solid #fff; }
+.segment-direction { background: #fff; color: #1d3461; border: 1px solid rgba(29,52,97,0.25); }
+.segment-direction span { display: block; font-size: 19px; line-height: 1; }
+
 /* 缩放动画期间 Leaflet 会自动隐藏 leaflet-zoom-hide 元素，避免错位 */
 .leaflet-zoom-hide.wind-particle-canvas {
   will-change: transform;

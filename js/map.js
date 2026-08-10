@@ -33,7 +33,7 @@ export function initMap(center, zoom) {
   return map;
 }
 
-export function drawSegments(scored, onSelect) {
+export function drawSegments(scored, onSelect, selectedId = null) {
   segmentLayer.clearLayers();
   for (const k in lineMap) delete lineMap[k];
   const bounds = [];
@@ -46,8 +46,8 @@ export function drawSegments(scored, onSelect) {
     // 底层：概率色粗线 + rough 手绘滤镜
     const base = L.polyline(latlngs, {
       color,
-      weight: 6,
-      opacity: 0.9,
+      weight: s.seg.id === selectedId ? 9 : 6,
+      opacity: s.seg.id === selectedId ? 1 : 0.9,
       lineCap: 'round',
       lineJoin: 'round',
       className: 'rough-seg'
@@ -68,7 +68,19 @@ export function drawSegments(scored, onSelect) {
       `<b>${s.seg.name}</b><br>骑行方向 ${Math.round(s.segBearing)}°` +
       `<br>KOM 概率 ${Math.round(s.probability * 100)}% · ${labelFor(s.probability)}`
     );
-    base.on('click', () => onSelect && onSelect(s));
+    base.on('click', () => onSelect && onSelect(s.seg.id));
+    const startIcon = L.divIcon({ className: 'segment-endpoint start', html: '起', iconSize: [24, 24], iconAnchor: [12, 12] });
+    const endIcon = L.divIcon({ className: 'segment-endpoint end', html: '终', iconSize: [24, 24], iconAnchor: [12, 12] });
+    L.marker(latlngs[0], { icon: startIcon, interactive: false }).addTo(segmentLayer);
+    L.marker(latlngs[latlngs.length - 1], { icon: endIcon, interactive: false }).addTo(segmentLayer);
+    const middle = latlngs[Math.floor(latlngs.length / 2)];
+    const arrowIcon = L.divIcon({
+      className: 'segment-direction',
+      html: `<span style="transform:rotate(${s.segBearing}deg)">↑</span>`,
+      iconSize: [28, 28],
+      iconAnchor: [14, 14]
+    });
+    L.marker(middle, { icon: arrowIcon, interactive: false }).addTo(segmentLayer);
     lineMap[s.seg.id] = base;
     bounds.push(...latlngs);
   });
