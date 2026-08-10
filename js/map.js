@@ -1,6 +1,6 @@
 // 地图渲染（依赖全局 Leaflet，由 index.html 的 CDN 引入）
-import { colorFor, labelFor } from './score.js?v=20260810092513';
-import { WindParticleLayer } from './wind-particles.js?v=20260810092513';
+import { colorFor, labelFor } from './score.js?v=20260810092927';
+import { WindParticleLayer } from './wind-particles.js?v=20260810092927';
 
 let map = null;
 let segmentLayer = null;

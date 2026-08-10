@@ -1,10 +1,10 @@
 // 主逻辑：全城风向网格采样 + 地图风场渲染 + 始终可见的风速/推荐面板
 // 说明：登录门槛已移除，所有内容无需登录即可访问。预设赛段已清空，
 // 由用户自行在 data/vancouver-segments.json 中添加赛段。
-import { CONFIG } from './config.js?v=20260810092513';
-import { fetchWinds, currentWind } from './wind.js?v=20260810092513';
-import { initMap, drawSegments, drawWindFlow } from './map.js?v=20260810092513';
-import { colorFor, labelFor, rank, scoreSegment } from './score.js?v=20260810092513';
+import { CONFIG } from './config.js?v=20260810092927';
+import { fetchWinds, currentWind } from './wind.js?v=20260810092927';
+import { initMap, drawSegments, drawWindFlow } from './map.js?v=20260810092927';
+import { colorFor, labelFor, rank, scoreSegment } from './score.js?v=20260810092927';
 
 const state = {
   windPoints: [],   // 全城网格风场采样点 {lat, lng, speed, dirFrom}
@@ -142,7 +142,9 @@ function selectSegment(id) {
 }
 
 async function loadSegments() {
-  const res = await fetch('data/vancouver-segments.json');
+  // Keep segment data on the same release version as the JavaScript. Without this,
+  // a browser can run new map code with an old cached JSON file and show stale colours.
+  const res = await fetch('data/vancouver-segments.json?v=20260810092927');
   if (!res.ok) throw new Error('赛段数据加载失败');
   const data = await res.json();
   return Array.isArray(data.segments) ? data.segments : [];
