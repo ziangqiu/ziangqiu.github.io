@@ -9,6 +9,7 @@
       "distance": 3.8,
       "elevationGain": 12,
       "avgGrade": -0.2,
+      "mapColor": "#d83b3b",
       "start": [
         49.2758,
         -123.2019

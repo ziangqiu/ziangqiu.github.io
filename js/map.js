@@ -38,47 +38,45 @@ export function drawSegments(scored, onSelect, selectedId = null) {
   for (const k in lineMap) delete lineMap[k];
   const bounds = [];
   scored.forEach(s => {
-    const color = colorFor(s.probability);
+    // A segment may opt into a fixed route colour (the test route is red); otherwise
+    // use its wind-score colour.
+    const color = s.seg.mapColor || colorFor(s.probability);
     const latlngs = s.seg.geometry && s.seg.geometry.length >= 2
       ? s.seg.geometry
       : [s.seg.start, s.seg.end];
 
-    // 底层：概率色粗线 + rough 手绘滤镜
+    // 细路线贴合道路宽度；点击则交给下方不可见的宽命中区域。
     const base = L.polyline(latlngs, {
       color,
-      weight: s.seg.id === selectedId ? 9 : 6,
-      opacity: s.seg.id === selectedId ? 1 : 0.9,
+      weight: s.seg.id === selectedId ? 3 : 2.2,
+      opacity: s.seg.id === selectedId ? 0.96 : 0.82,
       lineCap: 'round',
       lineJoin: 'round',
-      className: 'rough-seg'
+      className: 'segment-route'
     }).addTo(segmentLayer);
 
-    // 上层：白色点状虚线，模拟小朋友描边
-    L.polyline(latlngs, {
-      color: 'rgba(255,255,255,0.7)',
-      weight: 2.5,
-      opacity: 0.9,
-      dashArray: '2 8',
-      lineCap: 'round',
-      lineJoin: 'round',
-      className: 'rough-seg-2'
+    // 看不见但足够宽，手机上无需精确点中细线也能选择赛段。
+    const hitArea = L.polyline(latlngs, {
+      color: 'transparent', weight: 18, opacity: 0, lineCap: 'round', lineJoin: 'round'
     }).addTo(segmentLayer);
 
     base.bindPopup(
       `<b>${s.seg.name}</b><br>骑行方向 ${Math.round(s.segBearing)}°` +
       `<br>KOM 概率 ${Math.round(s.probability * 100)}% · ${labelFor(s.probability)}`
     );
-    base.on('click', () => onSelect && onSelect(s.seg.id));
-    const startIcon = L.divIcon({ className: 'segment-endpoint start', html: '起', iconSize: [24, 24], iconAnchor: [12, 12] });
-    const endIcon = L.divIcon({ className: 'segment-endpoint end', html: '终', iconSize: [24, 24], iconAnchor: [12, 12] });
+    const select = () => onSelect && onSelect(s.seg.id);
+    base.on('click', select);
+    hitArea.on('click', select);
+    const startIcon = L.divIcon({ className: 'segment-endpoint start', html: 'S', iconSize: [16, 16], iconAnchor: [8, 8] });
+    const endIcon = L.divIcon({ className: 'segment-endpoint end', html: 'F', iconSize: [16, 16], iconAnchor: [8, 8] });
     L.marker(latlngs[0], { icon: startIcon, interactive: false }).addTo(segmentLayer);
     L.marker(latlngs[latlngs.length - 1], { icon: endIcon, interactive: false }).addTo(segmentLayer);
     const middle = latlngs[Math.floor(latlngs.length / 2)];
     const arrowIcon = L.divIcon({
       className: 'segment-direction',
       html: `<span style="transform:rotate(${s.segBearing}deg)">↑</span>`,
-      iconSize: [28, 28],
-      iconAnchor: [14, 14]
+      iconSize: [18, 18],
+      iconAnchor: [9, 9]
     });
     L.marker(middle, { icon: arrowIcon, interactive: false }).addTo(segmentLayer);
     lineMap[s.seg.id] = base;
@@ -102,7 +100,7 @@ export function drawWindFlow(points) {
 export function highlightSegment(scored, id) {
   const target = lineMap[id];
   if (!target) return;
-  Object.values(lineMap).forEach(l => l.setStyle({ weight: 6, opacity: 0.9 }));
-  target.setStyle({ weight: 9, opacity: 1 });
+  Object.values(lineMap).forEach(l => l.setStyle({ weight: 2.2, opacity: 0.82 }));
+  target.setStyle({ weight: 3, opacity: 0.96 });
   map.fitBounds(target.getBounds(), { padding: [60, 60], maxZoom: 14 });
 }
